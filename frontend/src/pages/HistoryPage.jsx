@@ -1,6 +1,3 @@
-/**
- * History page - View user's reviews and restaurants added
- */
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import StarRating from '../components/StarRating'

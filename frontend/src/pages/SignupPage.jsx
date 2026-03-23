@@ -1,6 +1,3 @@
-/**
- * Signup page - New user registration
- */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signup, login } from '../services/authService'

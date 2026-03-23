@@ -1,7 +1,3 @@
-/**
- * Axios API client with JWT authentication interceptor
- * Automatically attaches Bearer token and handles 401 redirects
- */
 import axios from 'axios'
 
 const api = axios.create({

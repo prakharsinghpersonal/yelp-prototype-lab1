@@ -1,7 +1,3 @@
-/**
- * Navigation bar component
- * Displayed on all pages with links and logout button
- */
 import { Link, useNavigate } from 'react-router-dom'
 import { isLoggedIn, logout } from '../services/authService'
 
@@ -15,53 +11,58 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-[#003049] text-white shadow-md">
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold tracking-tight">
-          yelp<span className="text-[#fcbf49]">★</span>
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="text-2xl font-bold text-[#e1515f]">★</div>
+          <span className="text-xl font-bold text-gray-900 group-hover:text-[#e1515f] transition-colors">Yelpish</span>
         </Link>
 
-        {/* Search hint */}
-        <Link
-          to="/"
-          className="hidden md:block text-sm text-blue-200 hover:text-white transition-colors"
-        >
-          Find Restaurants
-        </Link>
+        {/* Center - Navigation Links */}
+        {loggedIn && (
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+            <Link to="/" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+              Explore
+            </Link>
+            <Link to="/favorites" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+              Favorites
+            </Link>
+            <Link to="/chat" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+              Ask AI
+            </Link>
+          </div>
+        )}
 
-        {/* Nav links */}
-        <div className="flex items-center gap-4 text-sm font-medium">
+        {/* Right side - Auth/User Menu */}
+        <div className="flex items-center gap-3">
           {loggedIn ? (
             <>
-              <Link to="/favorites" className="hover:text-[#fcbf49] transition-colors">
-                Favorites
-              </Link>
-              <Link to="/history" className="hover:text-[#fcbf49] transition-colors">
-                History
-              </Link>
-              <Link to="/add-restaurant" className="hover:text-[#fcbf49] transition-colors">
+              <Link 
+                to="/add-restaurant" 
+                className="hidden sm:inline-block btn-secondary text-sm py-2"
+              >
                 Add Restaurant
               </Link>
-              <Link to="/profile" className="hover:text-[#fcbf49] transition-colors">
+              <Link 
+                to="/profile" 
+                className="text-gray-700 hover:text-[#e1515f] transition-colors font-medium"
+              >
                 Profile
               </Link>
               <button
                 onClick={handleLogout}
-                className="bg-[#d62828] text-white px-3 py-1 rounded-md hover:bg-red-800 transition-colors"
+                className="btn-primary text-sm py-2"
               >
                 Log Out
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="hover:text-[#fcbf49] transition-colors">
+              <Link to="/login" className="text-gray-700 hover:text-[#e1515f] transition-colors font-medium">
                 Log In
               </Link>
-              <Link
-                to="/signup"
-                className="bg-[#d62828] text-white px-3 py-1 rounded-md hover:bg-red-800 transition-colors"
-              >
+              <Link to="/signup" className="btn-primary text-sm py-2">
                 Sign Up
               </Link>
             </>
