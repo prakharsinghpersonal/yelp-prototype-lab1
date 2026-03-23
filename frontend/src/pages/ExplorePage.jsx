@@ -69,80 +69,107 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <div className="bg-[#003049] text-white py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl font-bold mb-2">Find Great Restaurants</h1>
-          <p className="text-blue-200 mb-6">Discover, review, and share the best places to eat</p>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <div 
+        className="relative bg-cover bg-center h-[500px] flex items-center justify-center -mt-[64px]"
+        style={{ 
+          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)), url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
+          paddingTop: '64px' // offset for the global navbar if it sits on top
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-4 w-full text-center text-white">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-8">
+            yelp<span className="text-[#fcbf49]">★</span>
+          </h1>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 max-w-2xl mx-auto">
-            <input
-              type="text"
-              placeholder="Search by name, cuisine, or keyword..."
-              value={filters.q}
-              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-              className="flex-1 input text-gray-900"
-              aria-label="Search restaurants"
-            />
-            <input
-              type="text"
-              placeholder="City or zip"
-              value={filters.city}
-              onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
-              className="w-40 input text-gray-900"
-              aria-label="Location"
-            />
-            <button type="submit" className="btn-primary whitespace-nowrap">
-              Search
+          {/* Unified Search Bar */}
+          <form 
+            onSubmit={handleSearch} 
+            className="flex flex-col md:flex-row bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl mx-auto focus-within:ring-4 focus-within:ring-red-500/30"
+          >
+            <div className="flex-1 flex items-center px-4 py-3 md:py-0 border-b md:border-b-0 md:border-r border-gray-300">
+              <span className="text-gray-900 font-bold mr-2 hidden md:inline">Find</span>
+              <input
+                type="text"
+                placeholder="burgers, barbers, spas, handymen..."
+                value={filters.q}
+                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                className="w-full text-gray-900 outline-none placeholder-gray-500 font-medium"
+                aria-label="Search restaurants"
+              />
+            </div>
+            <div className="flex-1 flex items-center px-4 py-3 md:py-0">
+              <span className="text-gray-900 font-bold mr-2 hidden md:inline">Near</span>
+              <input
+                type="text"
+                placeholder="San Francisco, CA"
+                value={filters.city}
+                onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
+                className="w-full text-gray-900 outline-none placeholder-gray-500 font-medium"
+                aria-label="Location"
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="bg-[#d62828] hover:bg-red-800 text-white px-8 py-4 md:py-4 font-bold transition-colors flex items-center justify-center cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </button>
           </form>
+
+          {/* Categories Links (Quick Links) */}
+          <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm font-semibold">
+            <button onClick={() => setFilters((f) => ({ ...f, cuisine_type: 'American' }))} className="hover:underline flex items-center gap-1">
+              🍔 Restaurants
+            </button>
+            <button onClick={() => setFilters((f) => ({ ...f, cuisine_type: 'Italian' }))} className="hover:underline flex items-center gap-1">
+              🍝 Italian
+            </button>
+            <button onClick={() => setFilters((f) => ({ ...f, cuisine_type: 'Mexican' }))} className="hover:underline flex items-center gap-1">
+              🌮 Mexican
+            </button>
+            <button onClick={() => setFilters((f) => ({ ...f, cuisine_type: 'Japanese' }))} className="hover:underline flex items-center gap-1">
+              🍣 Japanese
+            </button>
+            <button onClick={() => setFilters((f) => ({ ...f, cuisine_type: '' }))} className="hover:underline flex items-center gap-1">
+              Explore More ▾
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap gap-2 items-center">
-          <span className="text-sm font-medium text-gray-600">Cuisine:</span>
-          <button
-            onClick={() => setFilters((f) => ({ ...f, cuisine_type: '' }))}
-            className={`text-sm px-3 py-1 rounded-full border transition-colors ${
-              !filters.cuisine_type
-                ? 'bg-[#d62828] text-white border-[#d62828]'
-                : 'border-gray-300 hover:border-[#d62828]'
-            }`}
-          >
-            All
-          </button>
+      {/* Categories (Yelp style category boxes) */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-center mb-8 text-gray-900">Categories</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
           {CUISINES.map((c) => (
             <button
               key={c}
-              onClick={() => setFilters((f) => ({ ...f, cuisine_type: c }))}
-              className={`text-sm px-3 py-1 rounded-full border transition-colors ${
+              onClick={() => {
+                setFilters((f) => ({ ...f, cuisine_type: c }));
+                fetchRestaurants(false);
+              }}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all ${
                 filters.cuisine_type === c
-                  ? 'bg-[#d62828] text-white border-[#d62828]'
-                  : 'border-gray-300 hover:border-[#d62828]'
+                  ? 'border-[#d62828] bg-red-50 text-[#d62828] shadow-sm'
+                  : 'border-gray-200 bg-white hover:shadow-md text-gray-700 hover:text-gray-900'
               }`}
             >
-              {c}
+              <span className="text-sm font-semibold text-center">{c}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* AI Chat banner */}
-      {isLoggedIn() && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <p className="text-sm text-yellow-800">
-              ✨ <strong>AI Assistant</strong> — Get personalized restaurant recommendations
-            </p>
-            <Link to="/chat" className="text-sm font-semibold text-yelp-red hover:underline">
-              Open Chat →
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Separator / Recent Activity Header */}
+      <div className="max-w-7xl mx-auto px-4 pb-4 pt-6 text-center border-t border-gray-200">
+        <h2 className="text-2xl font-bold text-[#d62828] mb-1">Recommended Restaurants</h2>
+        <p className="text-sm text-gray-500 mb-8">Discover top-rated places around you based on recent activity</p>
+      </div>
+
 
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 py-8">

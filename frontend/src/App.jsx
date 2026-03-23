@@ -14,7 +14,7 @@ import ProfilePage from './pages/ProfilePage'
 import AddRestaurantPage from './pages/AddRestaurantPage'
 import FavoritesPage from './pages/FavoritesPage'
 import HistoryPage from './pages/HistoryPage'
-import ChatPage from './pages/ChatPage'
+import AiChatWidget from './components/AiChatWidget'
 
 import OwnerSignupPage from './pages/OwnerSignupPage'
 import OwnerLoginPage from './pages/OwnerLoginPage'
@@ -41,13 +41,11 @@ export default function App() {
           <Route path="/add-restaurant" element={<AddRestaurantPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/history" element={<HistoryPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
         </Route>
-
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AiChatWidget />
     </BrowserRouter>
   )
 }
