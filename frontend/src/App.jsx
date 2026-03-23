@@ -16,6 +16,10 @@ import FavoritesPage from './pages/FavoritesPage'
 import HistoryPage from './pages/HistoryPage'
 import ChatPage from './pages/ChatPage'
 
+import OwnerSignupPage from './pages/OwnerSignupPage'
+import OwnerLoginPage from './pages/OwnerLoginPage'
+import OwnerDashboardPage from './pages/OwnerDashboardPage'
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -26,6 +30,10 @@ export default function App() {
         <Route path="/restaurants/:id" element={<RestaurantDetailsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        
+        {/* Owner Public Routes */}
+        <Route path="/owner/signup" element={<OwnerSignupPage />} />
+        <Route path="/owner/login" element={<OwnerLoginPage />} />
 
         {/* Protected — user must be logged in */}
         <Route element={<ProtectedRoute />}>
@@ -34,6 +42,7 @@ export default function App() {
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
         </Route>
 
         {/* Fallback */}

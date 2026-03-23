@@ -55,6 +55,7 @@ class Restaurant(Base):
     zip_code = Column(String(20))
     phone = Column(String(20))
     hours = Column(String(255))
+    image_url = Column(String(500))
     price_tier = Column(Enum('$', '$$', '$$$', '$$$$'))
     amenities = Column(JSON)
     avg_rating = Column(Float, default=0.0)

@@ -2,7 +2,7 @@
  * User profile page - View and edit user info and preferences
  */
 import { useState, useEffect } from 'react'
-import { getProfile, updateProfile, getPreferences, updatePreferences } from '../services/userService'
+import { getProfile, updateProfile, getPreferences, updatePreferences, uploadProfilePhoto } from '../services/userService'
 
 const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'India', 'Australia', 'Germany', 'France', 'Japan', 'China', 'Mexico', 'Brazil', 'Other']
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
@@ -64,6 +64,21 @@ export default function ProfilePage() {
     }
   }
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setSaving(true); setMessage(''); setError('')
+    try {
+      const res = await uploadProfilePhoto(file)
+      setProfile(res.data)
+      setMessage('Profile photo updated.')
+    } catch {
+      setError('Failed to upload photo.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const toggleArr = (key, val) =>
     setPrefs((p) => ({
       ...p,
@@ -97,6 +112,22 @@ export default function ProfilePage() {
       {/* Profile Tab */}
       {tab === 'profile' && profile && (
         <form onSubmit={handleProfileSave} className="card p-6 space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            {profile.profile_pic_url ? (
+              <img src={`http://localhost:8000${profile.profile_pic_url}`} alt="Profile" className="w-20 h-20 rounded-full object-cover border" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium border">
+                {profile.name?.charAt(0) || 'U'}
+              </div>
+            )}
+            <div>
+              <label className="btn-secondary cursor-pointer text-sm">
+                Change Photo
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+              </label>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <PField label="Full Name" value={profile.name || ''} onChange={(v) => setProfile((p) => ({ ...p, name: v }))} />
             <PField label="Email" value={profile.email || ''} onChange={(v) => setProfile((p) => ({ ...p, email: v }))} type="email" />

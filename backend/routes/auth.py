@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 # Import our database tools, models, schemas, and auth services
 from db.database import get_db
 from models.models import User
-from models.schemas import SignupRequest, LoginRequest, TokenResponse
+from models.schemas import SignupRequest, OwnerSignupRequest, LoginRequest, TokenResponse
 from services.auth import hash_password, verify_password, create_access_token
 
 # Create an APIRouter.
@@ -77,6 +77,70 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         )
         
     # 3. If everything is correct, create a new JWT token
+    token = create_access_token(data={"sub": str(user.id)})
+    
+    return {"access_token": token, "token_type": "bearer"}
+
+
+# The POST endpoint for "/auth/owner/signup"
+@router.post("/owner/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+def owner_signup(req: OwnerSignupRequest, db: Session = Depends(get_db)):
+    """
+    Register a new restaurant owner and return a JWT access token.
+    """
+    existing_user = db.query(User).filter(User.email == req.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+        
+    secured_password = hash_password(req.password)
+    
+    # We forcefully set role to 'owner'
+    new_user = User(
+        name=req.name,
+        email=req.email,
+        password_hash=secured_password,
+        phone=req.phone,
+        role="owner"
+    )
+    
+    # The restaurant_name and restaurant_location can be optionally logged or 
+    # used later when they create a restaurant
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    token = create_access_token(data={"sub": str(new_user.id)})
+    
+    return {"access_token": token, "token_type": "bearer"}
+
+
+# The POST endpoint for "/auth/owner/login"
+@router.post("/owner/login", response_model=TokenResponse)
+def owner_login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticate an owner and return a JWT access token.
+    Rejects the login if the user is not an owner.
+    """
+    user = db.query(User).filter(User.email == form_data.username).first()
+    
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    if user.role != "owner":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account does not have owner privileges",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
     token = create_access_token(data={"sub": str(user.id)})
     
     return {"access_token": token, "token_type": "bearer"}
