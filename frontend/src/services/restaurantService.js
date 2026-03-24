@@ -1,9 +1,9 @@
-/**
- * Restaurant service - Search, details, reviews, and favorites API calls
- */
 import api from './api'
 
-export const getRestaurants = (params) => api.get('/restaurants', { params })
+export const getRestaurants = (params, signal) => api.get('/restaurants', { 
+  params,
+  signal  // Pass abort signal to cancel request if needed
+})
 
 export const getRestaurant = (id) => api.get(`/restaurants/${id}`)
 
@@ -25,16 +25,12 @@ export const addFavorite = (restaurantId) =>
 export const removeFavorite = (restaurantId) =>
   api.delete(`/favorites/${restaurantId}`)
 
-export const getFavorites = (params) => api.get('/favorites', { params })
+export const getFavorites = () => api.get('/favorites')
 
 export const uploadRestaurantPhoto = (restaurantId, file) => {
   const formData = new FormData()
   formData.append('file', file)
-  return api.post(`/restaurants/${restaurantId}/photos`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  return api.post(`/restaurants/${restaurantId}/photos`, formData)
 }
 
 export const claimRestaurant = (restaurantId) =>

@@ -20,7 +20,8 @@ export default function LoginPage() {
       await login(form.email, form.password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password.')
+      const serverErr = err.response?.data?.detail;
+      setError(serverErr ? (typeof serverErr === 'string' ? serverErr : JSON.stringify(serverErr)) : err.message || 'Network error or unable to log in.');
     } finally {
       setLoading(false)
     }

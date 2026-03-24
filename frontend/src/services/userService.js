@@ -1,6 +1,3 @@
-/**
- * User service - Profile, preferences, and user data API calls
- */
 import api from './api'
 
 export const getProfile = () => api.get('/users/me')
@@ -16,9 +13,5 @@ export const getHistory = () => api.get('/users/me/history')
 export const uploadProfilePhoto = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  return api.post('/users/me/photo', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  return api.post('/users/me/photo', formData)
 }

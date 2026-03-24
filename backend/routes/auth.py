@@ -1,4 +1,3 @@
-"""Authentication routes - Login, signup, and JWT token management"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -58,18 +57,17 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
 
 
 # The POST endpoint for "/auth/login"
-# Notice we changed req: LoginRequest to form_data: OAuth2PasswordRequestForm = Depends()
 @router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(req: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate a user and return a JWT access token.
-    (Takes form data so Swagger UI's Authorize button works!)
+    (Changed to JSON request body to avoid python-multipart hangs)
     """
-    # 1. Look up the user by email (Swagger's form calls it 'username', but we map it to our 'email')
-    user = db.query(User).filter(User.email == form_data.username).first()
+    # 1. Look up the user by email
+    user = db.query(User).filter(User.email == req.email).first()
     
     # 2. Check if the user exists AND if the password matches the hash
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -120,14 +118,14 @@ def owner_signup(req: OwnerSignupRequest, db: Session = Depends(get_db)):
 
 # The POST endpoint for "/auth/owner/login"
 @router.post("/owner/login", response_model=TokenResponse)
-def owner_login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def owner_login(req: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate an owner and return a JWT access token.
     Rejects the login if the user is not an owner.
     """
-    user = db.query(User).filter(User.email == form_data.username).first()
+    user = db.query(User).filter(User.email == req.email).first()
     
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
