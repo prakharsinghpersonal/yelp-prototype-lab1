@@ -3,14 +3,10 @@ import StarRating from './StarRating'
 
 // Array of beautiful food/restaurant images for fallbacks
 const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80',
-  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
-  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-  'https://images.unsplash.com/photo-1544148103-0773bf10d330?w=600&q=80',
-  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&q=80',
-  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
-  'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&q=80',
+  'http://localhost:8000/uploads/default_heroes/hero1.png',
+  'http://localhost:8000/uploads/default_heroes/hero2.png',
+  'http://localhost:8000/uploads/default_heroes/hero3.png',
+  'http://localhost:8000/uploads/default_heroes/hero4.png',
 ]
 
 export default function RestaurantCard({ restaurant }) {
