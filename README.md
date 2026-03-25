@@ -290,7 +290,7 @@ Once the backend is running, visit:
 | ✅ | README.md — setup instructions | Both | Done in repo |
 | ✅ | requirements.txt — Python deps | Prakhar | Done in repo |
 | ⬜ | API Docs — Swagger at /docs OR Postman Collection | Prakhar | Swagger UI with testable routes, or Postman collection with descriptions, params, headers, sample responses |
-| ⬜ | Detailed commit messages throughout | Both | Every commit describes what and why |
+| ✅ | Detailed commit messages throughout | Both | Every commit describes what and why |
 | ⬜ | Lab Report — Introduction | Both | Purpose and goals of the system |
 | ⬜ | Lab Report — System Design | Both | Architecture diagram (FastAPI, MySQL, React, AI Service) |
 | ⬜ | Lab Report — AI Implementation | Both | How chatbot interprets queries, uses prefs, LangChain pipeline, Tavily |
