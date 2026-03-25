@@ -1,9 +1,12 @@
-"""Authentication services - JWT token handling and password hashing"""
 import os
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+import bcrypt
+# Monkey-patch bcrypt for passlib compatibility on Python 3.12+ with bcrypt 4.0+
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type("about", (object,), {"__version__": getattr(bcrypt, "__version__", "4.0.0")})
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 
@@ -11,16 +14,21 @@ from jose import jwt, JWTError
 from db.database import get_db
 from models.models import User
 
-# Password hashing using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 def hash_password(password: str) -> str:
     """Hash a plain text password using bcrypt"""
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    pwd_bytes = password.encode('utf-8')
+    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a bcrypt hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
 
 # JWT Token Configuration

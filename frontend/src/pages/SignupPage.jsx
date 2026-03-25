@@ -25,6 +25,8 @@ export default function SignupPage() {
     try {
       await signup({ name: form.name, email: form.email, password: form.password })
       await login(form.email, form.password)
+      // Small delay to ensure token and events are processed
+      await new Promise(resolve => setTimeout(resolve, 100))
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Signup failed. Email may already be in use.')

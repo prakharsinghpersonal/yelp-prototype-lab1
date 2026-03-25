@@ -24,8 +24,7 @@ export default function AiChatWidget() {
   const bottomRef = useRef(null)
   const location = useLocation()
 
-  // Only render if logged in
-  if (!isLoggedIn()) return null
+
 
   // Auto-scroll when chat opens or new message arrives
   useEffect(() => {
@@ -79,6 +78,8 @@ export default function AiChatWidget() {
     ])
     setInput('')
   }
+
+  if (!isLoggedIn()) return null
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
