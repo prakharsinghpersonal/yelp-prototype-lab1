@@ -54,6 +54,9 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <Link to="/owner/login" className="hover:text-[#fcbf49] transition-colors text-xs">
+                Owner Portal
+              </Link>
               <Link to="/login" className="hover:text-[#fcbf49] transition-colors">
                 Log In
               </Link>
