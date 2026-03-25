@@ -50,7 +50,7 @@ export default function OwnerAddRestaurantPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#003049] dark:text-white mb-2">Post Your Restaurant</h1>
+      <h1 className="text-2xl font-bold text-brand-dark dark:text-white mb-2">Post Your Restaurant</h1>
       <p className="text-sm text-gray-500 mb-6">Add your restaurant listing to the platform.</p>
 
       {error && (

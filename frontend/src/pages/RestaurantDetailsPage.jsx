@@ -9,6 +9,7 @@ import {
 import api from '../services/api'
 import { isLoggedIn } from '../services/authService'
 import { getProfile } from '../services/userService'
+import MapErrorBoundary from '../components/MapErrorBoundary'
 
 export default function RestaurantDetailsPage() {
   const { id } = useParams()
@@ -111,7 +112,7 @@ export default function RestaurantDetailsPage() {
       <div className="mb-4">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[#003049] dark:text-white">{restaurant.name}</h1>
+            <h1 className="text-3xl font-bold text-brand-dark dark:text-white">{restaurant.name}</h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <StarRating rating={restaurant.avg_rating || 0} size="md" />
               <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -173,7 +174,9 @@ export default function RestaurantDetailsPage() {
 
         {/* Map */}
         <div>
-          <RestaurantMap restaurant={restaurant} />
+          <MapErrorBoundary>
+            <RestaurantMap restaurant={restaurant} />
+          </MapErrorBoundary>
           {restaurant.address && (
             <a
               href={`https://www.google.com/maps/search/${encodeURIComponent(

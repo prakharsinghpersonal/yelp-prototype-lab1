@@ -42,7 +42,7 @@ export default function OwnerReviewsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#003049] mb-1">Customer Reviews</h1>
+      <h1 className="text-2xl font-bold text-brand-dark mb-1">Customer Reviews</h1>
       {avgRating && (
         <div className="flex items-center gap-2 mb-6">
           <StarRating rating={parseFloat(avgRating)} size="md" />
@@ -80,7 +80,7 @@ export default function OwnerReviewsPage() {
       </div>
 
       {/* Read-only notice */}
-      <div className="bg-[#eae2b7]/50 border border-[#fcbf49] rounded-md p-3 mb-4 text-sm text-[#003049]">
+      <div className="bg-[#eae2b7]/50 border border-[#fcbf49] rounded-md p-3 mb-4 text-sm text-brand-dark">
         ℹ️ Reviews are read-only. Per platform policy, owners cannot delete customer reviews.
       </div>
 

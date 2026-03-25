@@ -25,7 +25,7 @@ export default function OwnerDashboardPage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#003049]">Owner Dashboard</h1>
+          <h1 className="text-2xl font-bold text-brand-dark">Owner Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">{restaurant?.name}</p>
         </div>
         <div className="flex gap-3">
@@ -45,7 +45,7 @@ export default function OwnerDashboardPage() {
       {/* Rating distribution */}
       {analytics?.rating_distribution && (
         <div className="card p-6 mb-6">
-          <h2 className="text-lg font-semibold text-[#003049] mb-4">Rating Distribution</h2>
+          <h2 className="text-lg font-semibold text-brand-dark mb-4">Rating Distribution</h2>
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = analytics.rating_distribution[star] || 0
@@ -71,7 +71,7 @@ export default function OwnerDashboardPage() {
       {/* Recent reviews */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#003049]">Recent Reviews</h2>
+          <h2 className="text-lg font-semibold text-brand-dark">Recent Reviews</h2>
           <Link to="/owner/reviews" className="text-sm text-[#f77f00] hover:underline">View all →</Link>
         </div>
         {!recent_reviews?.length && (
@@ -100,7 +100,7 @@ function StatCard({ label, value, icon }) {
   return (
     <div className="card p-4 text-center">
       <div className="text-2xl mb-1">{icon}</div>
-      <div className="text-2xl font-bold text-[#003049]">{value}</div>
+      <div className="text-2xl font-bold text-brand-dark">{value}</div>
       <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
   )

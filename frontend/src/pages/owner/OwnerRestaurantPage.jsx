@@ -61,7 +61,7 @@ export default function OwnerRestaurantPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#003049] mb-6">Manage Restaurant Profile</h1>
+      <h1 className="text-2xl font-bold text-brand-dark mb-6">Manage Restaurant Profile</h1>
 
       {message && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{message}</div>}
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}

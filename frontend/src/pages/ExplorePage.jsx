@@ -70,7 +70,7 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters — bg-white and border-gray-200 auto-switch via global dark overrides */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-wrap gap-2 items-center">
           <span className="text-sm font-medium text-gray-600">Cuisine:</span>
@@ -102,12 +102,12 @@ export default function ExplorePage() {
 
       {/* AI Chat banner */}
       {isLoggedIn() && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
+        <div className="bg-[#fcbf49]/20 border-b border-[#fcbf49]/60 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <p className="text-sm text-yellow-800">
+            <p className="text-sm text-gray-600">
               ✨ <strong>AI Assistant</strong> — Get personalized restaurant recommendations
             </p>
-            <Link to="/chat" className="text-sm font-semibold text-yelp-red hover:underline">
+            <Link to="/chat" className="text-sm font-semibold text-[#d62828] hover:underline">
               Open Chat →
             </Link>
           </div>
@@ -117,16 +117,16 @@ export default function ExplorePage() {
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {loading && (
-          <div className="text-center py-16 text-gray-500">Loading restaurants...</div>
+          <div className="text-center py-16 text-brand-dark/60 dark:text-[#eae2b7]/70">Loading restaurants...</div>
         )}
         {error && (
-          <div className="text-center py-16 text-red-500">{error}</div>
+          <div className="text-center py-16 text-[#d62828]">{error}</div>
         )}
         {!loading && !error && restaurants.length === 0 && (
-          <div className="text-center py-16 text-gray-500">
+          <div className="text-center py-16 text-brand-dark/60 dark:text-[#eae2b7]/70">
             <p className="text-xl mb-2">No restaurants found</p>
             <p className="text-sm">Try a different search or{' '}
-              <Link to="/add-restaurant" className="text-yelp-red hover:underline">
+              <Link to="/add-restaurant" className="text-[#d62828] hover:underline">
                 add one
               </Link>
             </p>

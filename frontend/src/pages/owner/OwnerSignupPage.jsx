@@ -48,7 +48,7 @@ export default function OwnerSignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="card w-full max-w-md p-8">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-[#003049]">Register as Owner</h1>
+          <h1 className="text-2xl font-bold text-brand-dark">Register as Owner</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your restaurant on yelp★</p>
         </div>
 

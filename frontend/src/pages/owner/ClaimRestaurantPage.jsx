@@ -44,7 +44,7 @@ export default function ClaimRestaurantPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#003049] mb-2">Claim Your Restaurant</h1>
+      <h1 className="text-2xl font-bold text-brand-dark mb-2">Claim Your Restaurant</h1>
       <p className="text-gray-500 text-sm mb-6">
         Search for your restaurant listing and claim ownership to manage it.
       </p>
@@ -79,7 +79,7 @@ export default function ClaimRestaurantPage() {
         {results.map((r) => (
           <div key={r.id} className="card p-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-semibold text-[#003049] truncate">{r.name}</p>
+              <p className="font-semibold text-brand-dark truncate">{r.name}</p>
               <p className="text-sm text-gray-500">{r.cuisine_type} · {r.city}</p>
               {r.owner_id && (
                 <p className="text-xs text-orange-500 mt-0.5">Already claimed</p>
