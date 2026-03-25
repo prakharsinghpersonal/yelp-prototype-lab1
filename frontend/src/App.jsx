@@ -18,6 +18,7 @@ import OwnerSignupPage from './pages/owner/OwnerSignupPage'
 import OwnerDashboardPage from './pages/owner/OwnerDashboardPage'
 import OwnerRestaurantPage from './pages/owner/OwnerRestaurantPage'
 import OwnerReviewsPage from './pages/owner/OwnerReviewsPage'
+import OwnerAddRestaurantPage from './pages/owner/OwnerAddRestaurantPage'
 import ClaimRestaurantPage from './pages/owner/ClaimRestaurantPage'
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
           <Route path="/owner/restaurant" element={<OwnerRestaurantPage />} />
           <Route path="/owner/reviews" element={<OwnerReviewsPage />} />
+          <Route path="/owner/add-restaurant" element={<OwnerAddRestaurantPage />} />
           <Route path="/owner/claim" element={<ClaimRestaurantPage />} />
         </Route>
 
