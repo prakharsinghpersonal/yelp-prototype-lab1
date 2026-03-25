@@ -9,6 +9,14 @@ class SignupRequest(BaseModel):
     phone: Optional[str] = None
     role: Optional[str] = "user"
 
+class OwnerSignupRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    phone: Optional[str] = None
+    restaurant_name: Optional[str] = None
+    restaurant_location: Optional[str] = None
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -23,6 +31,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     role: str
+    profile_pic_url: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -49,6 +58,7 @@ class RestaurantCreate(BaseModel):
     zip_code: Optional[str] = None
     phone: Optional[str] = None
     hours: Optional[str] = None
+    image_url: Optional[str] = None
     price_tier: Optional[str] = None
     amenities: Optional[List[str]] = None
 
@@ -63,6 +73,7 @@ class RestaurantResponse(BaseModel):
     zip_code: Optional[str] = None
     phone: Optional[str] = None
     hours: Optional[str] = None
+    image_url: Optional[str] = None
     price_tier: Optional[str] = None
     amenities: Optional[List[str]] = None
     avg_rating: float = 0.0
@@ -126,5 +137,16 @@ class AIChatRequest(BaseModel):
     message: str
     conversation_history: List[ChatMessage] = []
 
+class RestaurantBrief(BaseModel):
+    id: int
+    name: str
+    cuisine_type: Optional[str] = None
+    city: Optional[str] = None
+    avg_rating: Optional[float] = None
+    price_tier: Optional[str] = None
+    reason: Optional[str] = None
+
 class AIChatResponse(BaseModel):
     response: str
+    restaurants: List[RestaurantBrief] = []
+

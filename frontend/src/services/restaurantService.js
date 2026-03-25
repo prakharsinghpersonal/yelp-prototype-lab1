@@ -26,3 +26,18 @@ export const removeFavorite = (restaurantId) =>
   api.delete(`/favorites/${restaurantId}`)
 
 export const getFavorites = (params) => api.get('/favorites', { params })
+
+export const uploadRestaurantPhoto = (restaurantId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post(`/restaurants/${restaurantId}/photos`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export const claimRestaurant = (restaurantId) =>
+  api.post(`/restaurants/${restaurantId}/claim`)
+
+export const getOwnerDashboard = () => api.get('/restaurants/owner/dashboard')

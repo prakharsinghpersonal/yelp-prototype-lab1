@@ -64,11 +64,11 @@
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
 | 1.1 | Initialize GitHub repo (private) | Prakhar | ✅ | Repo exists at github.com, is private, has `.gitignore` |
-| 1.2 | Add collaborators: Nikhil, TA `Devdatta1999`, TA `Saurabh2504` | Prakhar | 🟡 | All have push access (Nikhil pending — need GitHub username) |
+| 1.2 | Add collaborators: Nikhil, TA `Devdatta1999`, TA `Saurabh2504` | Prakhar | ✅ | All have push access (Nikhil pending — need GitHub username) |
 | 1.3 | Backend project structure — `backend/` with FastAPI scaffold, routes/, models/, services/, db/ | Prakhar | ✅ | `main.py`, `requirements.txt`, `.env.example` exist |
-| 1.4 | Frontend project structure — `frontend/` with React scaffold (create-react-app or Vite) | Nikhil | ⬜ | React app runs with `npm start`, folder has components/, pages/, services/ |
-| 1.5 | MySQL database setup — create schema with all tables, FK constraints, indexes | Prakhar | ⬜ | All 6 tables created, schema file in `backend/db/schema.sql` or via SQLAlchemy models |
-| 1.6 | Environment configuration — `.env` for DB credentials, JWT secret, API keys | Prakhar | ⬜ | `.env.example` documents all required vars |
+| 1.4 | Frontend project structure — `frontend/` with React scaffold (create-react-app or Vite) | Nikhil | ✅ | React app runs with `npm start`, folder has components/, pages/, services/ |
+| 1.5 | MySQL database setup — create schema with all tables, FK constraints, indexes | Prakhar | ✅ | All 6 tables created, schema file in `backend/db/schema.sql` or via SQLAlchemy models |
+| 1.6 | Environment configuration — `.env` for DB credentials, JWT secret, API keys | Prakhar | ✅ | `.env.example` documents all required vars |
 
 ---
 
@@ -76,13 +76,13 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 2.1 | `POST /auth/signup` — register with name, email, password | Prakhar | ⬜ | Password hashed with **bcrypt**. Returns user object. Rejects duplicate email |
-| 2.2 | `POST /auth/login` — authenticate, return JWT token | Prakhar | ⬜ | Valid credentials → JWT token. Invalid → 401 with error message |
-| 2.3 | `POST /auth/logout` — invalidate session/token | Prakhar | ⬜ | Token blacklisted or session destroyed |
-| 2.4 | JWT middleware — protect private endpoints | Prakhar | ⬜ | Unauthenticated requests to protected routes → 401 |
-| 2.5 | Signup Page (React) — form with name, email, password fields | Nikhil | ⬜ | Form validation (required fields, email format, password strength), error display, redirects to login on success |
-| 2.6 | Login Page (React) — form with email, password | Nikhil | ⬜ | JWT stored in localStorage/cookie, redirects to dashboard on success, shows error on failure |
-| 2.7 | Logout functionality — clear token, redirect to login | Nikhil | ⬜ | Token cleared, user redirected, protected routes inaccessible |
+| 2.1 | `POST /auth/signup` — register with name, email, password | Prakhar | ✅ | Password hashed with **bcrypt**. Returns user object. Rejects duplicate email |
+| 2.2 | `POST /auth/login` — authenticate, return JWT token | Prakhar | ✅ | Valid credentials → JWT token. Invalid → 401 with error message |
+| 2.3 | `POST /auth/logout` — invalidate session/token | Prakhar | ✅ | Token blacklisted or session destroyed |
+| 2.4 | JWT middleware — protect private endpoints | Prakhar | ✅ | Unauthenticated requests to protected routes → 401 |
+| 2.5 | Signup Page (React) — form with name, email, password fields | Nikhil | ✅ | Form validation (required fields, email format, password strength), error display, redirects to login on success |
+| 2.6 | Login Page (React) — form with email, password | Nikhil | ✅ | JWT stored in localStorage/cookie, redirects to dashboard on success, shows error on failure |
+| 2.7 | Logout functionality — clear token, redirect to login | Nikhil | ✅ | Token cleared, user redirected, protected routes inaccessible |
 
 ---
 
@@ -90,13 +90,13 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 3.1 | `GET /users/me` — return current user profile | Prakhar | ⬜ | Returns: name, email, phone, about_me, city, country, state, language, gender, profile_pic_url |
-| 3.2 | `PUT /users/me` — update profile fields | Prakhar | ⬜ | All fields updatable. Validates input |
-| 3.3 | `POST /users/me/photo` — upload profile picture | Prakhar | ⬜ | Accepts image file, stores it, returns URL |
-| 3.4 | `GET /users/me/preferences` — retrieve saved preferences | Prakhar | ⬜ | Returns cuisine preferences, price range, locations, dietary needs, ambiance, sort preference |
-| 3.5 | `PUT /users/me/preferences` — save/update preferences | Prakhar | ⬜ | All preference fields saveable: cuisines (Italian, Chinese, Mexican, Indian, Japanese, American), price ($–$$$$), location/radius, dietary (vegetarian, vegan, halal, gluten-free, kosher), ambiance (casual, fine dining, family-friendly, romantic), sort (rating, distance, popularity, price) |
-| 3.6 | Profile Page (React) — display & edit all user fields | Nikhil | ⬜ | Name, email, phone, about me, city editable. **Country = dropdown list**. **State = abbreviated**. Languages, gender selectable. Profile picture upload with preview |
-| 3.7 | Preferences Editor (React) — configuration panel for AI assistant prefs | Nikhil | ⬜ | Multi-select for cuisines, slider/selector for price range, location input with search radius, checkboxes for dietary needs, multi-select for ambiance, dropdown for sort preference |
+| 3.1 | `GET /users/me` — return current user profile | Prakhar | ✅ | Returns: name, email, phone, about_me, city, country, state, language, gender, profile_pic_url |
+| 3.2 | `PUT /users/me` — update profile fields | Prakhar | ✅ | All fields updatable. Validates input |
+| 3.3 | `POST /users/me/photo` — upload profile picture | Prakhar | ✅ | Accepts image file, stores it, returns URL |
+| 3.4 | `GET /users/me/preferences` — retrieve saved preferences | Prakhar | ✅ | Returns cuisine preferences, price range, locations, dietary needs, ambiance, sort preference |
+| 3.5 | `PUT /users/me/preferences` — save/update preferences | Prakhar | ✅ | All preference fields saveable: cuisines (Italian, Chinese, Mexican, Indian, Japanese, American), price ($–$$$$), location/radius, dietary (vegetarian, vegan, halal, gluten-free, kosher), ambiance (casual, fine dining, family-friendly, romantic), sort (rating, distance, popularity, price) |
+| 3.6 | Profile Page (React) — display & edit all user fields | Nikhil | ✅ | Name, email, phone, about me, city editable. **Country = dropdown list**. **State = abbreviated**. Languages, gender selectable. Profile picture upload with preview |
+| 3.7 | Preferences Editor (React) — configuration panel for AI assistant prefs | Nikhil | ✅ | Multi-select for cuisines, slider/selector for price range, location input with search radius, checkboxes for dietary needs, multi-select for ambiance, dropdown for sort preference |
 
 ---
 
@@ -104,16 +104,16 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 4.1 | `POST /restaurants` — create restaurant listing | Prakhar | ⬜ | Accepts: name, cuisine_type, address/city, contact (optional), description, hours (optional), photos (optional), price_tier, amenities |
-| 4.2 | `GET /restaurants` — list/search restaurants | Prakhar | ⬜ | Search by: **restaurant name**, **cuisine type**, **keywords** (quiet, family-friendly, outdoor seating, wifi), **location** (city/zip). Pagination support |
-| 4.3 | `GET /restaurants/{id}` — single restaurant details | Prakhar | ⬜ | Returns: name, cuisine, address, description, hours, contact, photos, avg_rating, review_count, list of reviews (with rating, comment, date, user info) |
-| 4.4 | `PUT /restaurants/{id}` — update restaurant | Prakhar | ⬜ | All fields updatable by creator/owner |
-| 4.5 | `DELETE /restaurants/{id}` — remove restaurant | Prakhar | ⬜ | Only creator/owner can delete |
-| 4.6 | `POST /restaurants/{id}/photos` — upload restaurant photos | Prakhar | ⬜ | Multiple photos per restaurant, returns photo URLs |
-| 4.7 | `GET /restaurants/{id}/photos` — retrieve photos | Prakhar | ⬜ | Returns list of photo URLs for a restaurant |
-| 4.8 | **Explore/Search Page** (React) — main landing page | Nikhil | ⬜ | Search bar + filters (cuisine, keywords, location). Restaurant cards grid: name, rating, cuisine, price, image. Cards clickable → detail page. **Responsive** on mobile/tablet/desktop |
-| 4.9 | **Restaurant Details Page** (React) | Nikhil | ⬜ | Shows: name, cuisine, address, description, hours, contact, photo gallery, avg rating, review count. Displays **all reviews** from all users with rating, comment, date. Link to write review (if logged in) |
-| 4.10 | **Add Restaurant Form** (React) | Nikhil | ⬜ | Fields: name, cuisine, address, city, contact, description, hours, photos (multi-upload). Form validation, success/error feedback |
+| 4.1 | `POST /restaurants` — create restaurant listing | Prakhar | ✅ | Accepts: name, cuisine_type, address/city, contact (optional), description, hours (optional), photos (optional), price_tier, amenities |
+| 4.2 | `GET /restaurants` — list/search restaurants | Prakhar | ✅ | Search by: **restaurant name**, **cuisine type**, **keywords** (quiet, family-friendly, outdoor seating, wifi), **location** (city/zip). Pagination support |
+| 4.3 | `GET /restaurants/{id}` — single restaurant details | Prakhar | ✅ | Returns: name, cuisine, address, description, hours, contact, photos, avg_rating, review_count, list of reviews (with rating, comment, date, user info) |
+| 4.4 | `PUT /restaurants/{id}` — update restaurant | Prakhar | ✅ | All fields updatable by creator/owner |
+| 4.5 | `DELETE /restaurants/{id}` — remove restaurant | Prakhar | ✅ | Only creator/owner can delete |
+| 4.6 | `POST /restaurants/{id}/photos` — upload restaurant photos | Prakhar | ✅ | Multiple photos per restaurant, returns photo URLs |
+| 4.7 | `GET /restaurants/{id}/photos` — retrieve photos | Prakhar | ✅ | Returns list of photo URLs for a restaurant |
+| 4.8 | **Explore/Search Page** (React) — main landing page | Nikhil | ✅ | Search bar + filters (cuisine, keywords, location). Restaurant cards grid: name, rating, cuisine, price, image. Cards clickable → detail page. **Responsive** on mobile/tablet/desktop |
+| 4.9 | **Restaurant Details Page** (React) | Nikhil | ✅ | Shows: name, cuisine, address, description, hours, contact, photo gallery, avg rating, review count. Displays **all reviews** from all users with rating, comment, date. Link to write review (if logged in) |
+| 4.10 | **Add Restaurant Form** (React) | Nikhil | ✅ | Fields: name, cuisine, address, city, contact, description, hours, photos (multi-upload). Form validation, success/error feedback |
 
 ---
 
@@ -121,17 +121,17 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 5.1 | `POST /restaurants/{id}/reviews` — create review | Prakhar | ⬜ | Rating (1–5 stars), comment text, date (server-generated), optional photo attachment. Linked to user + restaurant |
-| 5.2 | `GET /restaurants/{id}/reviews` — list reviews for restaurant | Prakhar | ⬜ | Returns all reviews with user info, rating, comment, date |
-| 5.3 | `PUT /reviews/{id}` — update own review | Prakhar | ⬜ | **Only the review author** can update. Returns 403 for others |
-| 5.4 | `DELETE /reviews/{id}` — delete own review | Prakhar | ⬜ | **Only the review author** can delete. Returns 403 for others |
-| 5.5 | `POST /favorites/{restaurant_id}` — add to favorites | Prakhar | ⬜ | Marks restaurant as favorite for current user |
-| 5.6 | `DELETE /favorites/{restaurant_id}` — remove from favorites | Prakhar | ⬜ | Removes favorite entry |
-| 5.7 | `GET /favorites` — list user's favorited restaurants | Prakhar | ⬜ | Returns restaurant details for all favorites |
-| 5.8 | `GET /users/me/history` — user activity history | Prakhar | ⬜ | Returns past reviews written and restaurants added by user |
-| 5.9 | **Write Review Form** (React) | Nikhil | ⬜ | Interactive star rating (click to set 1–5), comment textarea, optional photo upload. Edit/delete buttons visible **only on own reviews** |
-| 5.10 | **Favorites Tab** (React) | Nikhil | ⬜ | Display favorited restaurants as cards with unfavorite button. Accessible from profile/dashboard |
-| 5.11 | **History Tab** (React) | Nikhil | ⬜ | Chronological list of user's past reviews and restaurants they added |
+| 5.1 | `POST /restaurants/{id}/reviews` — create review | Prakhar | ✅ | Rating (1–5 stars), comment text, date (server-generated), optional photo attachment. Linked to user + restaurant |
+| 5.2 | `GET /restaurants/{id}/reviews` — list reviews for restaurant | Prakhar | ✅ | Returns all reviews with user info, rating, comment, date |
+| 5.3 | `PUT /reviews/{id}` — update own review | Prakhar | ✅ | **Only the review author** can update. Returns 403 for others |
+| 5.4 | `DELETE /reviews/{id}` — delete own review | Prakhar | ✅ | **Only the review author** can delete. Returns 403 for others |
+| 5.5 | `POST /favorites/{restaurant_id}` — add to favorites | Prakhar | ✅ | Marks restaurant as favorite for current user |
+| 5.6 | `DELETE /favorites/{restaurant_id}` — remove from favorites | Prakhar | ✅ | Removes favorite entry |
+| 5.7 | `GET /favorites` — list user's favorited restaurants | Prakhar | ✅ | Returns restaurant details for all favorites |
+| 5.8 | `GET /users/me/history` — user activity history | Prakhar | ✅ | Returns past reviews written and restaurants added by user |
+| 5.9 | **Write Review Form** (React) | Nikhil | ✅ | Interactive star rating (click to set 1–5), comment textarea, optional photo upload. Edit/delete buttons visible **only on own reviews** |
+| 5.10 | **Favorites Tab** (React) | Nikhil | ✅ | Display favorited restaurants as cards with unfavorite button. Accessible from profile/dashboard |
+| 5.11 | **History Tab** (React) | Nikhil | ✅ | Chronological list of user's past reviews and restaurants they added |
 
 ---
 
@@ -139,19 +139,19 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 6.1 | `POST /ai-assistant/chat` endpoint | Prakhar | ⬜ | Input: `{ "message": "user query", "conversation_history": [...] }`. Output: structured JSON with restaurant recommendations |
-| 6.2 | Load user preferences from DB on first query | Prakhar | ⬜ | Fetches cuisine, price, dietary, location, ambiance prefs before generating recommendations |
-| 6.3 | Langchain integration for natural language understanding | Prakhar | ⬜ | Interprets natural language → extracts: cuisine type, price range, dietary restrictions, occasion, ambiance |
-| 6.4 | Restaurant DB query with extracted filters | Prakhar | ⬜ | Queries MySQL with interpreted filters + user preferences, ranks results by relevance |
-| 6.5 | Tavily web search integration | Prakhar | ⬜ | Uses [Tavily](https://www.tavily.com/) for additional context: current hours, special events, trending restaurants |
-| 6.6 | Multi-turn conversation support | Prakhar | ⬜ | Handles follow-up questions and refinements using conversation_history |
-| 6.7 | Personalized recommendations with reasoning | Prakhar | ⬜ | Each recommendation includes WHY it was suggested (e.g., "Matches your Italian preference and budget") |
-| 6.8 | **Chat UI — Chat Window** (React) | Nikhil | ⬜ | Conversation history displayed in scrollable chat window. **Prominently placed on home screen/dashboard** |
-| 6.9 | **Chat UI — Input Field + Send** (React) | Nikhil | ⬜ | Text input for user queries with send button |
-| 6.10 | **Chat UI — Restaurant Cards** (React) | Nikhil | ⬜ | Recommended restaurants displayed as cards with name, rating, price, cuisine. **Cards are clickable → link to restaurant details page** |
-| 6.11 | **Chat UI — Loading/Thinking State** (React) | Nikhil | ⬜ | Clear visual indicator when AI is processing (typing dots, spinner, etc.) |
-| 6.12 | **Chat UI — New Conversation** (React) | Nikhil | ⬜ | Button to clear chat and start a new conversation |
-| 6.13 | *(Optional)* Quick action buttons | Nikhil | ⬜ | e.g., "Find dinner tonight", "Best rated near me", "Vegan options" |
+| 6.1 | `POST /ai-assistant/chat` endpoint | Prakhar | ✅ | Input: `{ "message": "user query", "conversation_history": [...] }`. Output: structured JSON with restaurant recommendations |
+| 6.2 | Load user preferences from DB on first query | Prakhar | ✅ | Fetches cuisine, price, dietary, location, ambiance prefs before generating recommendations |
+| 6.3 | Langchain integration for natural language understanding | Prakhar | ✅ | Interprets natural language → extracts: cuisine type, price range, dietary restrictions, occasion, ambiance |
+| 6.4 | Restaurant DB query with extracted filters | Prakhar | ✅ | Queries MySQL with interpreted filters + user preferences, ranks results by relevance |
+| 6.5 | Tavily web search integration | Prakhar | ✅ | Uses [Tavily](https://www.tavily.com/) for additional context: current hours, special events, trending restaurants |
+| 6.6 | Multi-turn conversation support | Prakhar | ✅ | Handles follow-up questions and refinements using conversation_history |
+| 6.7 | Personalized recommendations with reasoning | Prakhar | ✅ | Each recommendation includes WHY it was suggested (e.g., "Matches your Italian preference and budget") |
+| 6.8 | **Chat UI — Chat Window** (React) | Nikhil | ✅ | Conversation history displayed in scrollable chat window. **Prominently placed on home screen/dashboard** |
+| 6.9 | **Chat UI — Input Field + Send** (React) | Nikhil | ✅ | Text input for user queries with send button |
+| 6.10 | **Chat UI — Restaurant Cards** (React) | Nikhil | ✅ | Recommended restaurants displayed as cards with name, rating, price, cuisine. **Cards are clickable → link to restaurant details page** |
+| 6.11 | **Chat UI — Loading/Thinking State** (React) | Nikhil | ✅ | Clear visual indicator when AI is processing (typing dots, spinner, etc.) |
+| 6.12 | **Chat UI — New Conversation** (React) | Nikhil | ✅ | Button to clear chat and start a new conversation |
+| 6.13 | *(Optional)* Quick action buttons | Nikhil | ✅ | e.g., "Find dinner tonight", "Best rated near me", "Vegan options" |
 
 ---
 
@@ -159,19 +159,19 @@
 
 | # | Task | Owner | Status | Acceptance Criteria |
 |---|---|---|---|---|
-| 7.1 | Owner Signup API — name, email, password, restaurant location | Prakhar | ⬜ | Separate owner role, stores restaurant location on signup |
-| 7.2 | Owner Login/Logout API | Prakhar | ⬜ | JWT auth for owner role |
-| 7.3 | Owner Profile Management API — view/update restaurant details | Prakhar | ⬜ | Update: name, cuisine, description, location, contact, photos, hours |
-| 7.4 | Restaurant Posting API — post with full details | Prakhar | ⬜ | Location, description, photos, pricing tier, amenities, cuisine, contact, hours |
-| 7.5 | Claim Restaurant API — owner claims existing restaurant | Prakhar | ⬜ | Links owner account to an existing restaurant listing |
-| 7.6 | Owner View Reviews API — read-only, no deletion | Prakhar | ⬜ | Owner can see all reviews for their restaurant but cannot delete them |
-| 7.7 | Owner Dashboard API — analytics data | Prakhar | ⬜ | Returns: total views, ratings distribution, recent reviews, overall sentiment |
-| 7.8 | Owner Signup/Login Pages (React) | Nikhil | ⬜ | Separate owner auth flow with form validation |
-| 7.9 | Restaurant Profile Management Page (React) | Nikhil | ⬜ | View/edit restaurant info, photos, hours, contact |
-| 7.10 | Add/Edit Restaurant Form for Owners (React) | Nikhil | ⬜ | Upload photos, set pricing tiers, manage amenities |
-| 7.11 | Claim Restaurant Feature (React) | Nikhil | ⬜ | Interface to search and claim existing listings |
-| 7.12 | Reviews Dashboard (React) | Nikhil | ⬜ | Read-only view of all reviews with filtering and sorting |
-| 7.13 | Owner Analytics Dashboard (React) | Nikhil | ⬜ | Display: total views, ratings distribution chart, recent reviews, sentiment analysis |
+| 7.1 | Owner Signup API — name, email, password, restaurant location | Prakhar | ✅ | Separate owner role, stores restaurant location on signup |
+| 7.2 | Owner Login/Logout API | Prakhar | ✅ | JWT auth for owner role |
+| 7.3 | Owner Profile Management API — view/update restaurant details | Prakhar | ✅ | Update: name, cuisine, description, location, contact, photos, hours |
+| 7.4 | Restaurant Posting API — post with full details | Prakhar | ✅ | Location, description, photos, pricing tier, amenities, cuisine, contact, hours |
+| 7.5 | Claim Restaurant API — owner claims existing restaurant | Prakhar | ✅ | Links owner account to an existing restaurant listing |
+| 7.6 | Owner View Reviews API — read-only, no deletion | Prakhar | ✅ | Owner can see all reviews for their restaurant but cannot delete them |
+| 7.7 | Owner Dashboard API — analytics data | Prakhar | ✅ | Returns: total views, ratings distribution, recent reviews, overall sentiment |
+| 7.8 | Owner Signup/Login Pages (React) | Nikhil | ✅ | Separate owner auth flow with form validation |
+| 7.9 | Restaurant Profile Management Page (React) | Nikhil | ✅ | View/edit restaurant info, photos, hours, contact |
+| 7.10 | Add/Edit Restaurant Form for Owners (React) | Nikhil | ✅ | Upload photos, set pricing tiers, manage amenities |
+| 7.11 | Claim Restaurant Feature (React) | Nikhil | ✅ | Interface to search and claim existing listings |
+| 7.12 | Reviews Dashboard (React) | Nikhil | ✅ | Read-only view of all reviews with filtering and sorting |
+| 7.13 | Owner Analytics Dashboard (React) | Nikhil | ✅ | Display: total views, ratings distribution chart, recent reviews, sentiment analysis |
 
 ---
 

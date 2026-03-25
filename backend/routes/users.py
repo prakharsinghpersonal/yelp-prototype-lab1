@@ -1,5 +1,8 @@
 """User routes - Profile, preferences, and user data management"""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+import os
+import shutil
+import uuid
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models.models import User, UserPreference
@@ -40,6 +43,40 @@ def update_my_profile(
     for key, value in req.model_dump(exclude_unset=True).items():
         setattr(current_user, key, value)
         
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/me/photo", response_model=UserResponse)
+def upload_profile_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload a profile photo for the currently logged-in user.
+    """
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Create the directory if it doesn't exist
+    upload_dir = os.path.join("uploads", "users")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else "jpg"
+    filename = f"user_{current_user.id}_{uuid.uuid4().hex}.{ext}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    # Save the file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Update user in DB
+    url = f"/uploads/users/{filename}"
+    current_user.profile_pic_url = url
+    
     db.commit()
     db.refresh(current_user)
     return current_user

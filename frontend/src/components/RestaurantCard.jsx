@@ -6,15 +6,18 @@ import { Link } from 'react-router-dom'
 import StarRating from './StarRating'
 
 export default function RestaurantCard({ restaurant }) {
-  const { id, name, cuisine_type, city, avg_rating, review_count, price_tier, description } =
+  const { id, name, cuisine_type, city, avg_rating, review_count, price_tier, description, image_url } =
     restaurant
 
   return (
     <Link to={`/restaurants/${id}`} className="card hover:shadow-md transition-shadow block">
-      {/* Placeholder image */}
-      <div className="bg-gray-200 h-40 flex items-center justify-center text-gray-400 text-4xl">
-        🍽️
-      </div>
+      {image_url ? (
+        <img src={`http://localhost:8000${image_url}`} alt={name} className="w-full h-40 object-cover rounded-t-lg" />
+      ) : (
+        <div className="bg-gray-200 h-40 flex items-center justify-center text-gray-400 text-4xl rounded-t-lg">
+          🍽️
+        </div>
+      )}
 
       <div className="p-4">
         <h3 className="font-bold text-lg text-gray-900 truncate">{name}</h3>

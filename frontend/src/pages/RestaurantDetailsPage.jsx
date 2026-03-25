@@ -13,6 +13,8 @@ import {
   addFavorite,
   removeFavorite,
   getFavorites,
+  uploadRestaurantPhoto,
+  claimRestaurant,
 } from '../services/restaurantService'
 import { isLoggedIn } from '../services/authService'
 import { getProfile } from '../services/userService'
@@ -25,10 +27,12 @@ export default function RestaurantDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [isFav, setIsFav] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentUserRole, setCurrentUserRole] = useState(null)
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' })
   const [editingId, setEditingId] = useState(null)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +43,7 @@ export default function RestaurantDetailsPage() {
         if (isLoggedIn()) {
           const [me, favs] = await Promise.all([getProfile(), getFavorites()])
           setCurrentUserId(me.data.id)
+          setCurrentUserRole(me.data.role)
           setIsFav(favs.data.some((f) => f.restaurant_id === Number(id)))
         }
       } catch {
@@ -55,6 +60,35 @@ export default function RestaurantDetailsPage() {
       if (isFav) { await removeFavorite(id); setIsFav(false) }
       else { await addFavorite(id); setIsFav(true) }
     } catch { /* ignore */ }
+  }
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setLoading(true)
+    try {
+      const res = await uploadRestaurantPhoto(id, file)
+      setRestaurant(res.data)
+    } catch {
+      setError('Failed to upload photo.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClaim = async () => {
+    setLoading(true)
+    setError('')
+    setSuccessMsg('')
+    try {
+      const res = await claimRestaurant(id)
+      setRestaurant(res.data)
+      setSuccessMsg("Restaurant claimed successfully! You can now manage it from your Owner Dashboard.")
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to claim restaurant.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReviewSubmit = async (e) => {
@@ -96,8 +130,16 @@ export default function RestaurantDetailsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {successMsg && (
+        <div className="mb-4 bg-green-50 text-green-700 p-4 rounded-md border border-green-200">
+          {successMsg}
+        </div>
+      )}
       {/* Header */}
       <div className="mb-6">
+        {restaurant.image_url && (
+          <img src={`http://localhost:8000${restaurant.image_url}`} alt={restaurant.name} className="w-full h-64 object-cover rounded-xl mb-6 shadow-sm" />
+        )}
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-brand-dark">{restaurant.name}</h1>
@@ -114,11 +156,29 @@ export default function RestaurantDetailsPage() {
               )}
             </div>
           </div>
-          {isLoggedIn() && (
-            <button onClick={handleFavorite} className="btn-secondary text-sm">
-              {isFav ? '♥ Saved' : '♡ Save'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {isLoggedIn() && currentUserRole === 'owner' && !restaurant.owner_id && (
+              <button onClick={handleClaim} className="btn-primary text-sm bg-brand-primary border-brand-primary">
+                🏷️ Claim Business
+              </button>
+            )}
+            {isLoggedIn() && currentUserId === restaurant.owner_id && (
+              <label className="btn-secondary text-sm cursor-pointer">
+                📷 Add Photo
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+              </label>
+            )}
+            {isLoggedIn() && currentUserRole === 'owner' && currentUserId === restaurant.owner_id && (
+              <button onClick={() => navigate('/owner/dashboard')} className="btn-secondary text-sm">
+                📊 View Analytics
+              </button>
+            )}
+            {isLoggedIn() && currentUserRole !== 'owner' && (
+              <button onClick={handleFavorite} className="btn-secondary text-sm">
+                {isFav ? '♥ Saved' : '♡ Save'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -135,8 +195,8 @@ export default function RestaurantDetailsPage() {
         )}
       </div>
 
-      {/* Review form */}
-      {isLoggedIn() && (
+      {/* Review form (Only standard users can write reviews, not owners) */}
+      {isLoggedIn() && currentUserRole !== 'owner' && (
         <div className="card p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">
             {editingId ? 'Edit Your Review' : 'Write a Review'}
