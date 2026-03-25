@@ -26,6 +26,16 @@ yarn-error.log*
 *.swo
 .DS_Store
 
+# Claude Code
+.claude/
+
+# Vite cache
+.vite/
+frontend/.vite/
+
+# Virtual environments
+venv_py312/
+
 # Uploads
 uploads/
 
