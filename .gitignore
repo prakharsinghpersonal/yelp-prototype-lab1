@@ -45,4 +45,4 @@ generate_endpoints_doc.py
 generate_report.py
 
 # Generated docs (re-generate locally)
-Endpoints_Verification.docx
+# Endpoints_Verification.docx
