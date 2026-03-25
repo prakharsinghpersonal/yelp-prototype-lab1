@@ -1,5 +1,4 @@
-"""Favorites routes - Add/remove/list user's favorite restaurants with pagination"""
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -12,14 +11,9 @@ router = APIRouter(prefix="/favorites", tags=["Favorites"])
 
 
 @router.get("", response_model=List[FavoriteResponse])
-def get_favorites(
-    skip: int = Query(0, ge=0, description="Number of items to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Max items to return"),
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    """Get favorite restaurants for the logged-in user - paginated"""
-    favorites = db.query(Favorite).filter(Favorite.user_id == current_user.id).offset(skip).limit(limit).all()
+def get_favorites(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all favorite restaurants for the logged-in user"""
+    favorites = db.query(Favorite).filter(Favorite.user_id == current_user.id).all()
     return favorites
 
 

@@ -1,6 +1,3 @@
-/**
- * Add restaurant page - Create new restaurant listing
- */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createRestaurant } from '../services/restaurantService'

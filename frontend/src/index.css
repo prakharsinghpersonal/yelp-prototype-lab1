@@ -3,22 +3,64 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply scroll-smooth;
+  }
+  
   body {
-    @apply bg-[#eae2b7]/20 text-[#003049] font-sans;
+    @apply bg-gray-50 text-gray-900 font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
   }
 }
 
 @layer components {
+  /* Primary button - for main CTAs */
   .btn-primary {
-    @apply bg-[#d62828] text-white px-4 py-2 rounded-md font-semibold hover:bg-red-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#e1515f] hover:bg-red-600 text-white px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
   }
+  
+  /* Secondary button */
   .btn-secondary {
-    @apply bg-white text-[#003049] border border-gray-300 px-4 py-2 rounded-md font-semibold hover:bg-[#eae2b7]/40 transition-colors;
+    @apply bg-white text-gray-800 border-2 border-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 hover:border-gray-400 transition-colors;
   }
+  
+  /* Input fields */
   .input {
-    @apply w-full border border-gray-300 rounded-md px-3 py-2 text-[#003049] bg-white focus:outline-none focus:ring-2 focus:ring-[#f77f00] focus:border-transparent;
+    @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e1515f] focus:border-transparent transition-colors;
   }
+  
+  /* Card component - restaurant, review, etc */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
+    @apply bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 overflow-hidden transition-shadow duration-200;
+  }
+  
+  /* Badge/tag styling */
+  .badge {
+    @apply inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium;
+  }
+  
+  /* Star rating styling */
+  .star {
+    @apply text-amber-400;
+  }
+  
+  /* Section heading */
+  .section-title {
+    @apply text-2xl font-bold text-gray-900 mb-6;
   }
 }
+
+/* Smooth transitions */
+@layer utilities {
+  .transition-all-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift {
+    @apply hover:-translate-y-1 hover:shadow-lg transition-all-smooth;
+  }
+}
+

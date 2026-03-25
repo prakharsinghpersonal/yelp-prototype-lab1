@@ -4,17 +4,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          navy:   '#003049',  // dark backgrounds, navbar
-          red:    '#d62828',  // primary actions, stars
-          orange: '#f77f00',  // accents, badges
-          yellow: '#fcbf49',  // highlights
-          cream:  '#eae2b7',  // soft backgrounds
+        yelp: {
+          primary: '#e1515f',    // Yelp red
+          dark: '#333333',       // Dark text
+          light: '#f5f5f5',      // Soft backgrounds
+          border: '#e1e1e1',     // Subtle borders
+          hover: '#c41200',      // Hover states
         },
-        // keep short aliases used in JSX
-        'yelp-red':    '#d62828',
-        'brand-dark':  '#003049',
-        'brand-teal':  '#f77f00',  // mapped to orange — used as accent throughout
+      },
+      boxShadow: {
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.1)',
+        'card': '0 2px 6px rgba(0, 0, 0, 0.08)',
+        'hover': '0 8px 16px rgba(0, 0, 0, 0.12)',
+      },
+      spacing: {
+        'safe': 'max(1rem, env(safe-area-inset-left))',
       },
     },
   },
