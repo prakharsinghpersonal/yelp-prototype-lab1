@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { isLoggedIn, logout } from '../services/authService'
+import { logout } from '../services/authService'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const loggedIn = isLoggedIn()
+  const { isLoggedIn } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -20,7 +21,7 @@ export default function Navbar() {
         </Link>
 
         {/* Center - Navigation Links */}
-        {loggedIn && (
+        {isLoggedIn && (
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             <Link to="/" className="text-gray-700 hover:text-[#e1515f] transition-colors">
               Explore
@@ -36,7 +37,7 @@ export default function Navbar() {
 
         {/* Right side - Auth/User Menu */}
         <div className="flex items-center gap-3">
-          {loggedIn ? (
+          {isLoggedIn ? (
             <>
               <Link 
                 to="/add-restaurant" 

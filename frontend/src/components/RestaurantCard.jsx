@@ -3,31 +3,37 @@ import StarRating from './StarRating'
 
 // Array of beautiful food/restaurant images for fallbacks
 const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1555939594-58d7cb561818?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1504674900769-0ff4ccbf733d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80',
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
+  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+  'https://images.unsplash.com/photo-1544148103-0773bf10d330?w=600&q=80',
+  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&q=80',
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
+  'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&q=80',
 ]
 
 export default function RestaurantCard({ restaurant }) {
-  const { id, name, cuisine_type, city, avg_rating, review_count, price_tier, description } = restaurant
+  const { id, name, cuisine_type, city, avg_rating, review_count, price_tier, description, image_url } = restaurant
   
   // Use a deterministic image based on restaurant ID
-  const imageUrl = FALLBACK_IMAGES[id % FALLBACK_IMAGES.length]
+  const displayImage = image_url || FALLBACK_IMAGES[id % FALLBACK_IMAGES.length]
 
   return (
     <Link to={`/restaurants/${id}`} className="card hover-lift group overflow-hidden">
       {/* Image Container */}
-      <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+      <div className="relative h-48 bg-gray-200 overflow-hidden">
+        {/* Fallback text (Behind image) */}
+        <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-white text-lg font-bold bg-gradient-to-br from-[#e1515f] to-[#d62828]">
+          {name}
+        </div>
+        
         <img 
-          src={imageUrl} 
+          src={displayImage} 
           alt={name} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="relative z-10 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/600x400?text=Restaurant'
+            e.target.style.display = 'none'
           }}
         />
         

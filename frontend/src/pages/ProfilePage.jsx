@@ -1,6 +1,3 @@
-/**
- * User profile page - View and edit user info and preferences
- */
 import { useState, useEffect } from 'react'
 import { getProfile, updateProfile, getPreferences, updatePreferences, uploadProfilePhoto } from '../services/userService'
 

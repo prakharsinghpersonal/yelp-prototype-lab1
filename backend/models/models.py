@@ -1,12 +1,3 @@
-"""SQLAlchemy ORM models for database schema
-
-Models:
-  - User: Authentication and profile data
-  - Restaurant: Listings with basic info (name, cuisine, city, price tier)
-  - Review: User ratings and comments
-  - Favorite: User's favorite restaurants
-  - UserPreference: User's search preferences
-"""
 from sqlalchemy import Column, Integer, String, Text, Enum, TIMESTAMP, ForeignKey, Float, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship

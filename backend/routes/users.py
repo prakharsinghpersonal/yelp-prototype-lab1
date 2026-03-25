@@ -1,4 +1,3 @@
-"""User routes - Profile, preferences, and user data management"""
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 import os
 import shutil

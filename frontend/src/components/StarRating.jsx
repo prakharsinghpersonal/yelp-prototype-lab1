@@ -1,7 +1,3 @@
-/**
- * Star rating component
- * Displays read-only star ratings
- */
 // Display-only star rating
 export default function StarRating({ rating, max = 5, size = 'md' }) {
   const sizes = { sm: 'text-sm', md: 'text-lg', lg: 'text-2xl' }
