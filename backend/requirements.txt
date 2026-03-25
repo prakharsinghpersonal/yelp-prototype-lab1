@@ -6,6 +6,9 @@ python-dotenv==1.0.1
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
-langchain==0.1.11
-langchain-openai==0.0.8
-tavily-python==0.3.3
+
+# Optional AI/ML packages (currently using simple database queries for chat)
+# Uncomment below if implementing advanced AI recommendations:
+# langchain==0.1.11
+# langchain-google-genai==0.0.5
+# tavily-python==0.3.3

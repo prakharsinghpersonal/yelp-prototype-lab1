@@ -1,0 +1,14 @@
+/**
+ * User service - Profile, preferences, and user data API calls
+ */
+import api from './api'
+
+export const getProfile = () => api.get('/users/me')
+
+export const updateProfile = (data) => api.put('/users/me', data)
+
+export const getPreferences = () => api.get('/users/me/preferences')
+
+export const updatePreferences = (data) => api.put('/users/me/preferences', data)
+
+export const getHistory = () => api.get('/users/me/history')
