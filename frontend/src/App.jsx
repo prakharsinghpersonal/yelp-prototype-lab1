@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import AiChatWidget from './components/AiChatWidget'
+import { AuthProvider } from './contexts/AuthContext'
 
 import ExplorePage from './pages/ExplorePage'
 import LoginPage from './pages/LoginPage'
@@ -24,37 +26,40 @@ import ClaimRestaurantPage from './pages/owner/ClaimRestaurantPage'
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        {/* Public */}
-        <Route path="/" element={<ExplorePage />} />
-        <Route path="/restaurants/:id" element={<RestaurantDetailsPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/owner/login" element={<OwnerLoginPage />} />
-        <Route path="/owner/signup" element={<OwnerSignupPage />} />
+      <AuthProvider>
+        <Navbar />
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<ExplorePage />} />
+          <Route path="/restaurants/:id" element={<RestaurantDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/owner/login" element={<OwnerLoginPage />} />
+          <Route path="/owner/signup" element={<OwnerSignupPage />} />
 
-        {/* Protected — user */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/add-restaurant" element={<AddRestaurantPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-        </Route>
+          {/* Protected — user */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/add-restaurant" element={<AddRestaurantPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+          </Route>
 
-        {/* Protected — owner */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
-          <Route path="/owner/restaurant" element={<OwnerRestaurantPage />} />
-          <Route path="/owner/reviews" element={<OwnerReviewsPage />} />
-          <Route path="/owner/add-restaurant" element={<OwnerAddRestaurantPage />} />
-          <Route path="/owner/claim" element={<ClaimRestaurantPage />} />
-        </Route>
+          {/* Protected — owner */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
+            <Route path="/owner/restaurant" element={<OwnerRestaurantPage />} />
+            <Route path="/owner/reviews" element={<OwnerReviewsPage />} />
+            <Route path="/owner/add-restaurant" element={<OwnerAddRestaurantPage />} />
+            <Route path="/owner/claim" element={<ClaimRestaurantPage />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <AiChatWidget />
+      </AuthProvider>
     </BrowserRouter>
   )
 }
