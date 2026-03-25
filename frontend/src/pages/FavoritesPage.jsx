@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import RestaurantCard from '../components/RestaurantCard'
-import { getFavorites } from '../services/restaurantService'
+import { getFavorites, removeFavorite } from '../services/restaurantService'
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([])
@@ -28,8 +28,18 @@ export default function FavoritesPage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {favorites.map((r) => (
-          <RestaurantCard key={r.id} restaurant={r} />
+        {favorites.map((f) => (
+          <RestaurantCard 
+            key={f.id} 
+            restaurant={f.restaurant || f} 
+            isFav={true}
+            onToggleFav={async () => {
+              try {
+                await removeFavorite(f.restaurant?.id || f.id);
+                setFavorites(prev => prev.filter(item => item.id !== f.id));
+              } catch(e) { console.error('Failed to remove favorite', e) }
+            }}
+          />
         ))}
       </div>
     </div>

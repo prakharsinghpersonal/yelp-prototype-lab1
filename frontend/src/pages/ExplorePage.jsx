@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import RestaurantCard from '../components/RestaurantCard'
 import SkeletonCard from '../components/SkeletonCard'
-import { getRestaurants } from '../services/restaurantService'
+import { getRestaurants, addFavorite, removeFavorite, getFavorites } from '../services/restaurantService'
 import { isLoggedIn } from '../services/authService'
 
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
@@ -21,6 +21,37 @@ export default function ExplorePage() {
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({ q: '', cuisine_type: '', city: '' })
   const abortRef = useRef(null)
+  const [favorites, setFavorites] = useState(new Set())
+
+  useEffect(() => {
+    if (isLoggedIn()) {
+      getFavorites().then(res => {
+        setFavorites(new Set(res.data.map(f => f.restaurant_id)))
+      }).catch(console.error)
+    }
+  }, [])
+
+  const handleToggleFav = async (id, isFav) => {
+    try {
+      if (isFav) {
+        await removeFavorite(id)
+        setFavorites(prev => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      } else {
+        await addFavorite(id)
+        setFavorites(prev => {
+          const next = new Set(prev)
+          next.add(id)
+          return next
+        })
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite', err)
+    }
+  }
 
   const fetchRestaurants = useCallback(async (activeFilters) => {
     const key = cacheKey(activeFilters)
@@ -159,7 +190,14 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-            : restaurants.map((r) => <RestaurantCard key={r.id} restaurant={r} />)
+            : restaurants.map((r) => (
+                <RestaurantCard 
+                  key={r.id} 
+                  restaurant={r} 
+                  isFav={favorites.has(r.id)} 
+                  onToggleFav={handleToggleFav} 
+                />
+              ))
           }
         </div>
       </div>

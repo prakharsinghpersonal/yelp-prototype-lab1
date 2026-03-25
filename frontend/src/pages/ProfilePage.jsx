@@ -90,9 +90,8 @@ export default function ProfilePage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`pb-2 text-sm font-medium capitalize border-b-2 transition-colors ${
-              tab === t ? 'border-brand-teal text-brand-teal' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            className={`pb-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-brand-teal text-brand-teal' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
           >
             {t}
           </button>
@@ -236,9 +235,8 @@ function Chip({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-sm border font-medium transition-colors ${
-        active ? 'bg-brand-teal text-white border-brand-teal' : 'border-gray-300 hover:border-brand-teal'
-      }`}
+      className={`px-3 py-1.5 rounded-full text-sm border font-medium transition-colors ${active ? 'bg-brand-teal text-white border-brand-teal' : 'border-gray-300 hover:border-brand-teal'
+        }`}
     >
       {label}
     </button>

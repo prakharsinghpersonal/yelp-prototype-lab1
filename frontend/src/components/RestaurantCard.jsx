@@ -5,7 +5,7 @@ import StarRating from './StarRating'
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const imgSrc = (url) => (url && url.startsWith('/uploads') ? `${API}${url}` : url)
 
-export default function RestaurantCard({ restaurant }) {
+export default function RestaurantCard({ restaurant, isFav, onToggleFav }) {
   const { id, name, cuisine_type, city, avg_rating, review_count, price_tier, description, image_url } =
     restaurant
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -15,6 +15,20 @@ export default function RestaurantCard({ restaurant }) {
     <Link to={`/restaurants/${id}`} className="card hover:shadow-md transition-shadow block">
       {/* Image area */}
       <div className="relative h-40 bg-gray-100 overflow-hidden">
+        {onToggleFav && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onToggleFav(id, isFav);
+            }}
+            className="absolute top-2 left-2 bg-white/80 rounded-full w-8 h-8 flex items-center justify-center hover:bg-white shadow-sm transition-colors z-10"
+            aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+          >
+            <span className={`text-xl leading-none ${isFav ? 'text-[#d62828]' : 'text-gray-600'}`}>
+              {isFav ? '♥' : '♡'}
+            </span>
+          </button>
+        )}
         {image_url && !imgError ? (
           <>
             {/* Blurred placeholder shown until image loads */}
