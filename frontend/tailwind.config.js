@@ -13,9 +13,10 @@ export default {
           cream:  '#eae2b7',  // soft backgrounds
         },
         // keep short aliases used in JSX
-        'yelp-red':    '#d62828',
-        'brand-dark':  '#003049',
-        'brand-teal':  '#f77f00',  // mapped to orange — used as accent throughout
+        'yelp-red':      '#d62828',
+        'brand-dark':    '#003049',
+        'brand-teal':    '#f77f00',  // mapped to orange — used as accent throughout
+        'brand-primary': '#003049',  // alias used by AiChatWidget
       },
     },
   },

@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { isLoggedIn, logout } from '../services/authService'
+import { logout } from '../services/authService'
+import { useAuth } from '../contexts/AuthContext'
 import useDarkMode from '../hooks/useDarkMode'
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const loggedIn = isLoggedIn()
+  const { isLoggedIn } = useAuth()
   const [dark, setDark] = useDarkMode()
 
   const handleLogout = () => {
@@ -13,7 +14,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-[#003049] text-white shadow-md">
+    <nav className="bg-[#003049] text-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-2xl font-bold tracking-tight shrink-0">
@@ -34,7 +35,7 @@ export default function Navbar() {
             {dark ? '☀️' : '🌙'}
           </button>
 
-          {loggedIn ? (
+          {isLoggedIn ? (
             <>
               <Link to="/chat" className="hover:text-[#fcbf49] transition-colors">AI Chat</Link>
               <Link to="/favorites" className="hover:text-[#fcbf49] transition-colors">Favorites</Link>
