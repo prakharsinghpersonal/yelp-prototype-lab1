@@ -1,34 +1,120 @@
+/* @import must come first — before any other rules */
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Leaflet map styles */
-@import 'leaflet/dist/leaflet.css';
+/* ─── Design tokens ──────────────────────────────────────────────────────────
+   Palette:  #003049 navy · #d62828 red · #f77f00 orange · #fcbf49 yellow · #eae2b7 cream
+   All dark-mode values derive from these 5 colours only.
+   Components and pages read from variables — toggle html.dark and every
+   page updates automatically, no per-component dark: classes needed.
+──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --bg-page:   #f5f0e8;
+  --bg-card:   #ffffff;
+  --bg-muted:  #f3f4f6;
+  --bg-subtle: #f9fafb;
+  --border:    #e5e7eb;
+  --border-s:  #f3f4f6;
+  --tx-1:      #003049;
+  --tx-2:      #6b7280;
+  --tx-3:      #9ca3af;
+}
 
+html.dark {
+  --bg-page:   #0B2545;
+  --bg-card:   #163566;
+  --bg-muted:  #0d2d58;
+  --bg-subtle: #0B2545;
+  --border:    rgba(247, 127, 0, 0.30);
+  --border-s:  rgba(247, 127, 0, 0.12);
+  --tx-1:      #eae2b7;
+  --tx-2:      #fcbf49;
+  --tx-3:      rgba(234, 226, 183, 0.50);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 @layer base {
   body {
-    @apply bg-[#eae2b7]/20 text-[#003049] font-sans transition-colors duration-200;
-  }
-  html.dark body {
-    @apply bg-gray-950 text-gray-100;
+    background-color: var(--bg-page);
+    color: var(--tx-1);
+    @apply font-sans transition-colors duration-200;
   }
 }
 
+/* ─── Reusable component classes ─────────────────────────────────────────── */
 @layer components {
   .btn-primary {
-    @apply bg-[#d62828] text-white px-4 py-2 rounded-md font-semibold hover:bg-red-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#d62828] text-white px-4 py-2 rounded-md font-semibold
+           hover:bg-red-800 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply bg-white text-[#003049] border border-gray-300 px-4 py-2 rounded-md font-semibold hover:bg-[#eae2b7]/40 transition-colors
-           dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700;
+    background-color: var(--bg-card);
+    color: var(--tx-1);
+    border-color: var(--border);
+    @apply border px-4 py-2 rounded-md font-semibold transition-colors;
   }
+  .btn-secondary:hover { background-color: var(--bg-muted); }
+
   .input {
-    @apply w-full border border-gray-300 rounded-md px-3 py-2 text-[#003049] bg-white
-           focus:outline-none focus:ring-2 focus:ring-[#f77f00] focus:border-transparent
-           dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:ring-[#fcbf49];
+    background-color: var(--bg-card);
+    color: var(--tx-1);
+    border-color: var(--border);
+    @apply w-full border rounded-md px-3 py-2
+           focus:outline-none focus:ring-2 focus:ring-[#f77f00] focus:border-transparent;
   }
+  .input::placeholder { color: var(--tx-3); }
+
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden
-           dark:bg-gray-800 dark:border-gray-700;
+    background-color: var(--bg-card);
+    border-color: var(--border);
+    @apply rounded-lg shadow-sm border overflow-hidden;
   }
 }
+
+/* ─── Global dark-mode overrides for Tailwind utility classes ────────────────
+   These rules live after @tailwind utilities so they win on specificity ties.
+   Any page using standard Tailwind gray utilities gets the correct palette
+   colour automatically — no per-page dark: variants required.
+──────────────────────────────────────────────────────────────────────────── */
+
+/* Text */
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-gray-700,
+html.dark .text-gray-600 { color: var(--tx-1) !important; }
+
+html.dark .text-gray-500 { color: var(--tx-2) !important; }
+html.dark .text-gray-400 { color: var(--tx-3) !important; }
+
+/* Brand navy → cream in dark */
+html.dark .text-brand-dark  { color: var(--tx-1) !important; }
+/* blue-200 subtitle on hero → yellow */
+html.dark .text-blue-200    { color: var(--tx-2) !important; }
+
+/* Backgrounds */
+html.dark .bg-white         { background-color: var(--bg-card)   !important; }
+html.dark .bg-gray-50       { background-color: var(--bg-subtle)  !important; }
+html.dark .bg-gray-100      { background-color: var(--bg-muted)   !important; }
+html.dark .bg-gray-200      { background-color: var(--bg-card)    !important; }
+html.dark .bg-gray-400      { background-color: var(--tx-2)       !important; }
+
+/* Borders */
+html.dark .border-gray-100  { border-color: var(--border-s) !important; }
+html.dark .border-gray-200,
+html.dark .border-gray-300  { border-color: var(--border)   !important; }
+
+/* Alert boxes */
+html.dark .bg-red-50        { background-color: rgba(214, 40,  40,  0.12) !important; }
+html.dark .border-red-200   { border-color:     rgba(214, 40,  40,  0.35) !important; }
+html.dark .text-red-700     { color: #fca5a5 !important; }
+
+html.dark .bg-green-50      { background-color: rgba( 34, 197, 94,  0.08) !important; }
+html.dark .border-green-200 { border-color:     rgba( 34, 197, 94,  0.25) !important; }
+html.dark .text-green-700   { color: #86efac !important; }
+
+/* Select dropdown options */
+html.dark select option     { background-color: var(--bg-card); color: var(--tx-1); }
