@@ -6,18 +6,38 @@ const PRICE_TIERS = ['$', '$$', '$$$', '$$$$']
 const AMENITIES = ['WiFi', 'Outdoor Seating', 'Parking', 'Wheelchair Accessible', 'Family Friendly', 'Takeout', 'Delivery', 'Reservations']
 
 export default function OwnerRestaurantPage() {
+  const [allRestaurants, setAllRestaurants] = useState([])
+  const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
+  // Load all owned restaurants list first
   useEffect(() => {
-    api.get('/owner/restaurant')
+    api.get('/restaurants/owner/dashboard')
+      .then((res) => {
+        const list = res.data.all_restaurants || []
+        setAllRestaurants(list)
+        const primaryId = res.data.restaurant?.id
+        if (primaryId) {
+          setSelectedId(primaryId)
+        }
+      })
+      .catch(() => setError('Failed to load restaurants.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Load full details for selected restaurant
+  useEffect(() => {
+    if (!selectedId) return
+    setLoading(true)
+    api.get(`/restaurants/${selectedId}`)
       .then((res) => setForm(res.data))
       .catch(() => setError('Failed to load restaurant profile.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedId])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -55,13 +75,29 @@ export default function OwnerRestaurantPage() {
     }
   }
 
-  if (loading) return <div className="text-center py-20 text-gray-500">Loading...</div>
+  if (loading && !form) return <div className="text-center py-20 text-gray-500">Loading...</div>
   if (error && !form) return <div className="text-center py-20 text-red-500">{error}</div>
   if (!form) return null
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-brand-dark mb-6">Manage Restaurant Profile</h1>
+      <h1 className="text-2xl font-bold text-brand-dark mb-2">Manage Restaurant Profile</h1>
+
+      {/* Restaurant picker — shown when owner has multiple */}
+      {allRestaurants.length > 1 && (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-600 mb-1">Managing:</label>
+          <select
+            className="input w-full max-w-sm"
+            value={selectedId || ''}
+            onChange={(e) => { setSelectedId(Number(e.target.value)); setMessage(''); setError('') }}
+          >
+            {allRestaurants.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {message && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{message}</div>}
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}

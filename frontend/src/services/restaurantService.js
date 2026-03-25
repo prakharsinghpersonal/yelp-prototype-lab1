@@ -36,3 +36,6 @@ export const claimRestaurant = (restaurantId) =>
   api.post(`/restaurants/${restaurantId}/claim`)
 
 export const getOwnerDashboard = () => api.get('/restaurants/owner/dashboard')
+
+export const autofillRestaurant = (name, city) =>
+  api.post('/ai-assistant/autofill', { name, city })

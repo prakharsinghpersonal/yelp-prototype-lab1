@@ -8,6 +8,9 @@ import {
   deleteReview, addFavorite, removeFavorite, getFavorites,
 } from '../services/restaurantService'
 import { isLoggedIn } from '../services/authService'
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const imgSrc = (url) => (url && url.startsWith('/uploads') ? `${API}${url}` : url)
 import { getProfile } from '../services/userService'
 
 const FALLBACK_IMAGES = [
@@ -113,8 +116,11 @@ export default function RestaurantDetailsPage() {
           {restaurant.name}
         </div>
         <img
-          src={restaurant.image_url || imageUrl}
+          src={imgSrc(restaurant.image_url) || imageUrl}
           alt={restaurant.name}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
           className="relative z-10 w-full h-full object-cover"
           onError={(e) => { e.target.style.display = 'none' }}
         />

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createRestaurant } from '../services/restaurantService'
+import { createRestaurant, autofillRestaurant } from '../services/restaurantService'
 
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean', 'French', 'Other']
 const PRICE_TIERS = ['$', '$$', '$$$', '$$$$']
@@ -9,12 +9,44 @@ export default function AddRestaurantPage() {
   const navigate = useNavigate()
   const [form, setForm] = useState({
     name: '', cuisine_type: '', address: '', city: '', zip: '',
-    phone: '', description: '', hours: '', price_tier: '',
+    phone: '', description: '', hours: '', price_tier: '', image_url: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [autofilling, setAutofilling] = useState(false)
+  const [autofillMsg, setAutofillMsg] = useState('')
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+
+  const handleAutofill = async () => {
+    if (!form.name || !form.city) {
+      setAutofillMsg('Enter a restaurant name and city first.')
+      return
+    }
+    setAutofilling(true)
+    setAutofillMsg('')
+    try {
+      const res = await autofillRestaurant(form.name, form.city)
+      const d = res.data
+      setForm((f) => ({
+        ...f,
+        name: d.name || f.name,
+        cuisine_type: d.cuisine_type || f.cuisine_type,
+        description: d.description || f.description,
+        address: d.address || f.address,
+        city: d.city || f.city,
+        phone: d.phone || f.phone,
+        hours: d.hours || f.hours,
+        price_tier: d.price_tier || f.price_tier,
+        image_url: d.image_url || f.image_url,
+      }))
+      setAutofillMsg('Details filled in! Review and adjust if needed.')
+    } catch {
+      setAutofillMsg('Could not find details. Please fill in manually.')
+    } finally {
+      setAutofilling(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,6 +75,35 @@ export default function AddRestaurantPage() {
 
       <form onSubmit={handleSubmit} className="card p-6 space-y-4">
         <Field label="Restaurant Name *" id="name" value={form.name} onChange={set('name')} />
+        <Field label="City *" id="city-top" value={form.city} onChange={set('city')} placeholder="e.g. New York" />
+
+        <div>
+          <button
+            type="button"
+            onClick={handleAutofill}
+            disabled={autofilling}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-md border-2 border-dashed border-[#f77f00] text-[#f77f00] hover:bg-[#f77f00] hover:text-white transition-colors font-medium text-sm"
+          >
+            {autofilling ? (
+              <>
+                <span className="animate-spin">⟳</span> Searching...
+              </>
+            ) : (
+              <>✨ Auto-fill details with AI</>
+            )}
+          </button>
+          {autofillMsg && (
+            <p className={`mt-1 text-xs ${autofillMsg.includes('filled') ? 'text-green-600' : 'text-amber-600'}`}>
+              {autofillMsg}
+            </p>
+          )}
+          {form.image_url && (
+            <div className="mt-2 relative">
+              <img src={form.image_url} alt="Restaurant preview" className="w-full h-40 object-cover rounded-lg border border-gray-200" onError={(e) => { e.target.style.display = 'none' }} />
+              <button type="button" onClick={() => setForm((f) => ({ ...f, image_url: '' }))} className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-black/70">✕</button>
+            </div>
+          )}
+        </div>
 
         <div>
           <label htmlFor="cuisine_type" className="block text-sm font-medium text-gray-700 mb-1">
@@ -77,10 +138,7 @@ export default function AddRestaurantPage() {
         </div>
 
         <Field label="Address" id="address" value={form.address} onChange={set('address')} />
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="City *" id="city" value={form.city} onChange={set('city')} />
-          <Field label="Zip Code" id="zip" value={form.zip} onChange={set('zip')} />
-        </div>
+        <Field label="Zip Code" id="zip" value={form.zip} onChange={set('zip')} />
         <Field label="Phone" id="phone" value={form.phone} onChange={set('phone')} type="tel" />
         <Field label="Hours of Operation" id="hours" value={form.hours} onChange={set('hours')} placeholder="e.g. Mon-Fri 11am-10pm" />
 

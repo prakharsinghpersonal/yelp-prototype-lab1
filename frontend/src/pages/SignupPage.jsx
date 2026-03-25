@@ -112,7 +112,7 @@ export default function SignupPage() {
                 {form.country && STATES_BY_COUNTRY[form.country] ? (
                   <select className="input" value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}>
                     <option value="">Select state...</option>
-                    {STATES_BY_COUNTRY[form.country].map((s) => <option key={s} value={s}>{s}</option>)}
+                    {STATES_BY_COUNTRY[form.country].map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                   </select>
                 ) : (
                   <input

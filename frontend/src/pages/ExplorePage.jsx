@@ -1,41 +1,68 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import RestaurantCard from '../components/RestaurantCard'
+import SkeletonCard from '../components/SkeletonCard'
 import { getRestaurants } from '../services/restaurantService'
 import { isLoggedIn } from '../services/authService'
 
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
 
+// Simple in-memory cache: key → { data, ts }
+const cache = {}
+const CACHE_TTL = 60_000 // 60 seconds
+
+function cacheKey(filters) {
+  return JSON.stringify(filters)
+}
+
 export default function ExplorePage() {
   const [restaurants, setRestaurants] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({ q: '', cuisine_type: '', city: '' })
+  const abortRef = useRef(null)
 
-  const fetchRestaurants = useCallback(async () => {
+  const fetchRestaurants = useCallback(async (activeFilters) => {
+    const key = cacheKey(activeFilters)
+    const cached = cache[key]
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      setRestaurants(cached.data)
+      setLoading(false)
+      return
+    }
+
+    // Cancel any in-flight request
+    if (abortRef.current) abortRef.current.abort()
+    abortRef.current = new AbortController()
+
     setLoading(true)
     setError('')
     try {
       const params = {}
-      if (filters.q) params.q = filters.q
-      if (filters.cuisine_type) params.cuisine_type = filters.cuisine_type
-      if (filters.city) params.city = filters.city
-      const res = await getRestaurants(params)
+      if (activeFilters.q) params.search = activeFilters.q
+      if (activeFilters.cuisine_type) params.cuisine = activeFilters.cuisine_type
+      if (activeFilters.city) params.city = activeFilters.city
+      const res = await getRestaurants(params, abortRef.current.signal)
+      cache[key] = { data: res.data, ts: Date.now() }
       setRestaurants(res.data)
-    } catch {
-      setError('Failed to load restaurants.')
+    } catch (err) {
+      if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
+        setError('Failed to load restaurants.')
+      }
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [])
 
   useEffect(() => {
-    fetchRestaurants()
-  }, [fetchRestaurants])
+    fetchRestaurants(filters)
+  }, [filters, fetchRestaurants])
 
   const handleSearch = (e) => {
     e.preventDefault()
-    fetchRestaurants()
+    // Bust cache for current filters on manual search
+    delete cache[cacheKey(filters)]
+    fetchRestaurants(filters)
   }
 
   return (
@@ -70,7 +97,7 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* Filters — bg-white and border-gray-200 auto-switch via global dark overrides */}
+      {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-wrap gap-2 items-center">
           <span className="text-sm font-medium text-gray-600">Cuisine:</span>
@@ -116,9 +143,6 @@ export default function ExplorePage() {
 
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {loading && (
-          <div className="text-center py-16 text-brand-dark/60 dark:text-[#eae2b7]/70">Loading restaurants...</div>
-        )}
         {error && (
           <div className="text-center py-16 text-[#d62828]">{error}</div>
         )}
@@ -133,9 +157,10 @@ export default function ExplorePage() {
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {restaurants.map((r) => (
-            <RestaurantCard key={r.id} restaurant={r} />
-          ))}
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+            : restaurants.map((r) => <RestaurantCard key={r.id} restaurant={r} />)
+          }
         </div>
       </div>
     </div>

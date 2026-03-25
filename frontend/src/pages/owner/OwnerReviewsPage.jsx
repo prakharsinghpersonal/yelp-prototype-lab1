@@ -17,7 +17,7 @@ export default function OwnerReviewsPage() {
   const [filterRating, setFilterRating] = useState(0)
 
   useEffect(() => {
-    api.get('/owner/reviews')
+    api.get('/restaurants/owner/reviews')
       .then((res) => setReviews(res.data))
       .catch(() => setError('Failed to load reviews.'))
       .finally(() => setLoading(false))

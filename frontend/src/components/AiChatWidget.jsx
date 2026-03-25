@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { sendMessage } from '../services/aiService'
-import { isLoggedIn } from '../services/authService'
+import { useAuth } from '../contexts/AuthContext'
 import StarRating from './StarRating'
 
 const QUICK_ACTIONS = [
@@ -11,6 +11,7 @@ const QUICK_ACTIONS = [
 ]
 
 export default function AiChatWidget() {
+  const { isLoggedIn } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
     {
@@ -67,7 +68,7 @@ export default function AiChatWidget() {
     setInput('')
   }
 
-  if (!isLoggedIn()) return null
+  if (!isLoggedIn) return null
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">

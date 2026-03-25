@@ -9,7 +9,7 @@ export default function OwnerDashboardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get('/owner/dashboard')
+    api.get('/restaurants/owner/dashboard')
       .then((res) => setData(res.data))
       .catch(() => setError('Failed to load dashboard.'))
       .finally(() => setLoading(false))
@@ -19,7 +19,16 @@ export default function OwnerDashboardPage() {
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>
   if (!data) return null
 
-  const { restaurant, analytics, recent_reviews } = data
+  const { restaurant, analytics, recent_reviews, all_restaurants } = data
+
+  if (!restaurant) return (
+    <div className="max-w-xl mx-auto px-4 py-20 text-center">
+      <div className="text-5xl mb-4">🏪</div>
+      <h2 className="text-xl font-bold text-brand-dark mb-2">No Restaurant Yet</h2>
+      <p className="text-gray-500 mb-6">You haven't added or claimed a restaurant. Add one to see your dashboard.</p>
+      <Link to="/owner/add-restaurant" className="btn-primary">Add a Restaurant</Link>
+    </div>
+  )
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -64,6 +73,22 @@ export default function OwnerDashboardPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* All owned restaurants */}
+      {all_restaurants?.length > 1 && (
+        <div className="card p-6 mb-6">
+          <h2 className="text-lg font-semibold text-brand-dark mb-3">Your Restaurants ({all_restaurants.length})</h2>
+          <div className="flex flex-wrap gap-3">
+            {all_restaurants.map((r) => (
+              <Link key={r.id} to={`/restaurants/${r.id}`}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm hover:border-[#f77f00] transition-colors">
+                <span className="font-medium">{r.name}</span>
+                <span className="text-gray-400 ml-2">{r.avg_rating?.toFixed(1)}★</span>
+              </Link>
+            ))}
           </div>
         </div>
       )}
