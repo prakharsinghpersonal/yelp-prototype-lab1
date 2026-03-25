@@ -38,6 +38,10 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
         email=req.email,
         password_hash=secured_password,
         phone=req.phone,
+        city=req.city,
+        state=req.state,
+        country=req.country,
+        zip_code=req.zip_code,
         role=req.role
     )
     
@@ -101,6 +105,10 @@ def owner_signup(req: OwnerSignupRequest, db: Session = Depends(get_db)):
         email=req.email,
         password_hash=secured_password,
         phone=req.phone,
+        city=req.city,
+        state=req.state,
+        country=req.country,
+        zip_code=req.zip_code,
         role="owner"
     )
     

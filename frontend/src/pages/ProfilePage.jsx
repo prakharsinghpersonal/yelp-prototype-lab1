@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { getProfile, updateProfile, getPreferences, updatePreferences, uploadProfilePhoto } from '../services/userService'
 
-const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'India', 'Australia', 'Germany', 'France', 'Japan', 'China', 'Mexico', 'Brazil', 'Other']
+import { COUNTRY_CODES, STATES_BY_COUNTRY, COUNTRIES } from '../utils/locations'
+
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
 const DIETARY = ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Kosher']
 const AMBIANCE = ['Casual', 'Fine Dining', 'Family-Friendly', 'Romantic', 'Outdoor']
@@ -21,7 +22,17 @@ export default function ProfilePage() {
     const load = async () => {
       try {
         const [p, pref] = await Promise.all([getProfile(), getPreferences()])
-        setProfile(p.data)
+        
+        // Strip any existing country codes from db response so only 10 digits are shown in UI
+        let cleanPhone = p.data.phone || ''
+        if (cleanPhone && cleanPhone.includes(' ')) {
+          cleanPhone = cleanPhone.split(' ')[1] // Gets the 10 digits assuming "+91 1234567890" architecture
+        } else {
+          cleanPhone = cleanPhone.replace(/\D/g, '')
+          if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10)
+        }
+        
+        setProfile({ ...p.data, phone: cleanPhone })
         setPrefs(pref.data || {
           cuisines: [], price_range: '', preferred_locations: [],
           dietary_needs: [], ambiance: [], sort_preference: 'rating',
@@ -37,9 +48,29 @@ export default function ProfilePage() {
 
   const handleProfileSave = async (e) => {
     e.preventDefault()
+    
+    // Validations
+    if (profile.phone && profile.phone.length !== 10) {
+      setError('Please enter exactly 10 digits for the phone number.')
+      return
+    }
+    if (profile.state && profile.country && STATES_BY_COUNTRY[profile.country] && !STATES_BY_COUNTRY[profile.country].includes(profile.state)) {
+      setError(`Please select a valid state for ${profile.country}.`)
+      return
+    }
+
     setSaving(true); setMessage(''); setError('')
     try {
-      await updateProfile(profile)
+      // Clean up state format before saving
+      const dataToSave = { ...profile }
+      if (dataToSave.state) dataToSave.state = dataToSave.state.toUpperCase()
+      
+      // Prepend country code directly for the database
+      if (dataToSave.phone && dataToSave.country && COUNTRY_CODES[dataToSave.country]) {
+        dataToSave.phone = `${COUNTRY_CODES[dataToSave.country]} ${dataToSave.phone}`
+      }
+      
+      await updateProfile(dataToSave)
       setMessage('Profile updated successfully.')
     } catch {
       setError('Failed to update profile.')
@@ -67,7 +98,8 @@ export default function ProfilePage() {
     setSaving(true); setMessage(''); setError('')
     try {
       const res = await uploadProfilePhoto(file)
-      setProfile(res.data)
+      // Keep our clean phone number state
+      setProfile({ ...res.data, phone: profile.phone })
       setMessage('Profile photo updated.')
     } catch {
       setError('Failed to upload photo.')
@@ -128,18 +160,52 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <PField label="Full Name" value={profile.name || ''} onChange={(v) => setProfile((p) => ({ ...p, name: v }))} />
             <PField label="Email" value={profile.email || ''} onChange={(v) => setProfile((p) => ({ ...p, email: v }))} type="email" />
-            <PField label="Phone" value={profile.phone || ''} onChange={(v) => setProfile((p) => ({ ...p, phone: v }))} type="tel" />
-            <PField label="City" value={profile.city || ''} onChange={(v) => setProfile((p) => ({ ...p, city: v }))} />
-
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-              <select className="input" value={profile.country || ''} onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value }))}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Country First *</label>
+              <select className="input" value={profile.country || ''} onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value, state: '' }))}>
                 <option value="">Select country...</option>
                 {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            <PField label="State (abbreviated)" value={profile.state || ''} onChange={(v) => setProfile((p) => ({ ...p, state: v }))} placeholder="e.g. CA" maxLength={2} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <div className="flex">
+                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm font-medium">
+                  {profile.country ? COUNTRY_CODES[profile.country] || '+' : '+?'}
+                </span>
+                <input 
+                  type="tel" 
+                  className="input rounded-l-none" 
+                  value={profile.phone || ''} 
+                  onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} 
+                  placeholder={profile.country ? "10 digits" : "Select country above"}
+                  maxLength={10} 
+                  disabled={!profile.country}
+                />
+              </div>
+            </div>
+
+            <PField label="City" value={profile.city || ''} onChange={(v) => setProfile((p) => ({ ...p, city: v }))} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              {profile.country && STATES_BY_COUNTRY[profile.country] ? (
+                <select className="input" value={profile.state || ''} onChange={(e) => setProfile(p => ({ ...p, state: e.target.value }))}>
+                  <option value="">Select state...</option>
+                  {STATES_BY_COUNTRY[profile.country].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <input 
+                  type="text" 
+                  className="input" 
+                  value={profile.state || ''} 
+                  onChange={(e) => setProfile(p => ({ ...p, state: e.target.value }))} 
+                  placeholder={profile.country ? "Enter state/region" : "Select country first"}
+                  disabled={!profile.country}
+                />
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>

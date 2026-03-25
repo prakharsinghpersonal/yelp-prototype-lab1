@@ -7,6 +7,10 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str
     phone: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    zip_code: Optional[str] = None
     role: Optional[str] = "user"
 
 class OwnerSignupRequest(BaseModel):
@@ -14,6 +18,10 @@ class OwnerSignupRequest(BaseModel):
     email: EmailStr
     password: str
     phone: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    zip_code: Optional[str] = None
     restaurant_name: Optional[str] = None
     restaurant_location: Optional[str] = None
 

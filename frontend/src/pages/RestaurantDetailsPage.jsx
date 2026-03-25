@@ -16,10 +16,10 @@ import { getProfile } from '../services/userService'
 
 // Fallback restaurant images
 const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1555939594-58d7cb561818?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1504674900769-0ff4ccbf733d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+  'http://localhost:8000/uploads/default_heroes/hero1.png',
+  'http://localhost:8000/uploads/default_heroes/hero2.png',
+  'http://localhost:8000/uploads/default_heroes/hero3.png',
+  'http://localhost:8000/uploads/default_heroes/hero4.png',
 ]
 
 export default function RestaurantDetailsPage() {
@@ -124,13 +124,18 @@ export default function RestaurantDetailsPage() {
   return (
     <div className="bg-white">
       {/* Hero Image Section */}
-      <div className="relative h-96 bg-gray-400 overflow-hidden">
+      <div className="relative h-96 bg-gray-200 overflow-hidden">
+        {/* Fallback text (Behind image) */}
+        <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-white text-5xl font-bold bg-gradient-to-br from-[#e1515f] to-[#d62828]">
+          {restaurant.name}
+        </div>
+        
         <img 
-          src={imageUrl} 
+          src={restaurant.image_url || imageUrl} 
           alt={restaurant.name} 
-          className="w-full h-full object-cover"
+          className="relative z-10 w-full h-full object-cover"
           onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/1200x400?text=Restaurant'
+            e.target.style.display = 'none'
           }}
         />
         {/* Back Button */}
