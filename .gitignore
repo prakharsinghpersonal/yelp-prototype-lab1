@@ -31,3 +31,18 @@ uploads/
 
 # Local scratch files
 addup
+
+# SQLite database (use MySQL in production — see .env.example)
+*.db
+*.sqlite
+*.sqlite3
+
+# Mock data (local dev only)
+frontend/src/mock/
+
+# Report/doc generation scripts (local dev only)
+generate_endpoints_doc.py
+generate_report.py
+
+# Generated docs (re-generate locally)
+Endpoints_Verification.docx
