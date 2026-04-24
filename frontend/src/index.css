@@ -1,66 +1,120 @@
+/* @import must come first — before any other rules */
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design tokens ──────────────────────────────────────────────────────────
+   Palette:  #003049 navy · #d62828 red · #f77f00 orange · #fcbf49 yellow · #eae2b7 cream
+   All dark-mode values derive from these 5 colours only.
+   Components and pages read from variables — toggle html.dark and every
+   page updates automatically, no per-component dark: classes needed.
+──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --bg-page:   #f5f0e8;
+  --bg-card:   #ffffff;
+  --bg-muted:  #f3f4f6;
+  --bg-subtle: #f9fafb;
+  --border:    #e5e7eb;
+  --border-s:  #f3f4f6;
+  --tx-1:      #003049;
+  --tx-2:      #6b7280;
+  --tx-3:      #9ca3af;
+}
+
+html.dark {
+  --bg-page:   #0B2545;
+  --bg-card:   #163566;
+  --bg-muted:  #0d2d58;
+  --bg-subtle: #0B2545;
+  --border:    rgba(247, 127, 0, 0.30);
+  --border-s:  rgba(247, 127, 0, 0.12);
+  --tx-1:      #eae2b7;
+  --tx-2:      #fcbf49;
+  --tx-3:      rgba(234, 226, 183, 0.50);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 @layer base {
-  * {
-    @apply scroll-smooth;
-  }
-  
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
+    background-color: var(--bg-page);
+    color: var(--tx-1);
+    @apply font-sans transition-colors duration-200;
   }
 }
 
+/* ─── Reusable component classes ─────────────────────────────────────────── */
 @layer components {
-  /* Primary button - for main CTAs */
   .btn-primary {
-    @apply bg-[#e1515f] hover:bg-red-600 text-white px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#d62828] text-white px-4 py-2 rounded-md font-semibold
+           hover:bg-red-800 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
-  /* Secondary button */
   .btn-secondary {
-    @apply bg-white text-gray-800 border-2 border-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 hover:border-gray-400 transition-colors;
+    background-color: var(--bg-card);
+    color: var(--tx-1);
+    border-color: var(--border);
+    @apply border px-4 py-2 rounded-md font-semibold transition-colors;
   }
-  
-  /* Input fields */
+  .btn-secondary:hover { background-color: var(--bg-muted); }
+
   .input {
-    @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e1515f] focus:border-transparent transition-colors;
+    background-color: var(--bg-card);
+    color: var(--tx-1);
+    border-color: var(--border);
+    @apply w-full border rounded-md px-3 py-2
+           focus:outline-none focus:ring-2 focus:ring-[#f77f00] focus:border-transparent;
   }
-  
-  /* Card component - restaurant, review, etc */
+  .input::placeholder { color: var(--tx-3); }
+
   .card {
-    @apply bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 overflow-hidden transition-shadow duration-200;
-  }
-  
-  /* Badge/tag styling */
-  .badge {
-    @apply inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium;
-  }
-  
-  /* Star rating styling */
-  .star {
-    @apply text-amber-400;
-  }
-  
-  /* Section heading */
-  .section-title {
-    @apply text-2xl font-bold text-gray-900 mb-6;
+    background-color: var(--bg-card);
+    border-color: var(--border);
+    @apply rounded-lg shadow-sm border overflow-hidden;
   }
 }
 
-/* Smooth transitions */
-@layer utilities {
-  .transition-all-smooth {
-    @apply transition-all duration-300 ease-out;
-  }
-  
-  .hover-lift {
-    @apply hover:-translate-y-1 hover:shadow-lg transition-all-smooth;
-  }
-}
+/* ─── Global dark-mode overrides for Tailwind utility classes ────────────────
+   These rules live after @tailwind utilities so they win on specificity ties.
+   Any page using standard Tailwind gray utilities gets the correct palette
+   colour automatically — no per-page dark: variants required.
+──────────────────────────────────────────────────────────────────────────── */
 
+/* Text */
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-gray-700,
+html.dark .text-gray-600 { color: var(--tx-1) !important; }
+
+html.dark .text-gray-500 { color: var(--tx-2) !important; }
+html.dark .text-gray-400 { color: var(--tx-3) !important; }
+
+/* Brand navy → cream in dark */
+html.dark .text-brand-dark  { color: var(--tx-1) !important; }
+/* blue-200 subtitle on hero → yellow */
+html.dark .text-blue-200    { color: var(--tx-2) !important; }
+
+/* Backgrounds */
+html.dark .bg-white         { background-color: var(--bg-card)   !important; }
+html.dark .bg-gray-50       { background-color: var(--bg-subtle)  !important; }
+html.dark .bg-gray-100      { background-color: var(--bg-muted)   !important; }
+html.dark .bg-gray-200      { background-color: var(--bg-card)    !important; }
+html.dark .bg-gray-400      { background-color: var(--tx-2)       !important; }
+
+/* Borders */
+html.dark .border-gray-100  { border-color: var(--border-s) !important; }
+html.dark .border-gray-200,
+html.dark .border-gray-300  { border-color: var(--border)   !important; }
+
+/* Alert boxes */
+html.dark .bg-red-50        { background-color: rgba(214, 40,  40,  0.12) !important; }
+html.dark .border-red-200   { border-color:     rgba(214, 40,  40,  0.35) !important; }
+html.dark .text-red-700     { color: #fca5a5 !important; }
+
+html.dark .bg-green-50      { background-color: rgba( 34, 197, 94,  0.08) !important; }
+html.dark .border-green-200 { border-color:     rgba( 34, 197, 94,  0.25) !important; }
+html.dark .text-green-700   { color: #86efac !important; }
+
+/* Select dropdown options */
+html.dark select option     { background-color: var(--bg-card); color: var(--tx-1); }

@@ -17,18 +17,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    console.error('API Error:', {
-      status: err.response?.status,
-      data: err.response?.data,
-      message: err.message,
-    })
-    
     if (err.response?.status === 401) {
       localStorage.removeItem('token')
-      // Only do hard redirect if not already logging out (to prevent conflict with React Router)
-      if (!window._isLoggingOut) {
-        window.location.href = '/login'
-      }
+      window.location.href = '/login'
     }
     return Promise.reject(err)
   }

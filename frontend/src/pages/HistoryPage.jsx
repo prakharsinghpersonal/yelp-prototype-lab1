@@ -4,7 +4,7 @@ import StarRating from '../components/StarRating'
 import { getHistory } from '../services/userService'
 
 export default function HistoryPage() {
-  const [history, setHistory] = useState({ reviews: [], restaurants: [] })
+  const [history, setHistory] = useState({ reviews: [], restaurants_added: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -44,12 +44,12 @@ export default function HistoryPage() {
 
       {/* Restaurants added */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">Restaurants Added ({history.restaurants?.length || 0})</h2>
-        {!history.restaurants?.length && (
+        <h2 className="text-lg font-semibold mb-3">Restaurants Added ({history.restaurants_added?.length || 0})</h2>
+        {!history.restaurants_added?.length && (
           <p className="text-gray-500 text-sm">You haven't added any restaurants yet.</p>
         )}
         <div className="space-y-3">
-          {history.restaurants?.map((r) => (
+          {history.restaurants_added?.map((r) => (
             <Link key={r.id} to={`/restaurants/${r.id}`} className="card p-4 block hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{r.name}</span>

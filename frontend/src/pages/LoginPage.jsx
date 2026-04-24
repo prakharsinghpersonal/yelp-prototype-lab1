@@ -48,8 +48,7 @@ export default function LoginPage() {
         navigate('/')
       }
     } catch (err) {
-      const serverErr = err.response?.data?.detail;
-      setError(serverErr ? (typeof serverErr === 'string' ? serverErr : JSON.stringify(serverErr)) : err.message || 'Network error or unable to log in.');
+      setError(err.response?.data?.detail || 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
