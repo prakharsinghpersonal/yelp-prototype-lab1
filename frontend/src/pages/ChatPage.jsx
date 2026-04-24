@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { sendMessage } from '../services/aiService'
 import StarRating from '../components/StarRating'
+import { useChat } from '../contexts/ChatContext'
+import { useToast } from '../contexts/ToastContext'
 
 const QUICK_ACTIONS = [
   'Find dinner tonight',
@@ -11,17 +13,19 @@ const QUICK_ACTIONS = [
   'Family-friendly places',
 ]
 
+function formatAssistantText(text) {
+  return (text || '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+}
+
 export default function ChatPage() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: "Hi! I'm your restaurant assistant. Tell me what you're looking for and I'll find the perfect spot for you.",
-      restaurants: [],
-    },
-  ])
+  const { messages, setMessages, resetChat } = useChat()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
+  const { showToast } = useToast()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -53,6 +57,7 @@ export default function ChatPage() {
         },
       ])
     } catch {
+      showToast('AI chat failed. Please try again.', 'error')
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Sorry, something went wrong. Please try again.', restaurants: [] },
@@ -62,44 +67,32 @@ export default function ChatPage() {
     }
   }
 
-  const handleNewChat = () => {
-    setMessages([
-      {
-        role: 'assistant',
-        content: "Hi! I'm your restaurant assistant. Tell me what you're looking for and I'll find the perfect spot for you.",
-        restaurants: [],
-      },
-    ])
-    setInput('')
-  }
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-brand-dark">AI Restaurant Assistant</h1>
-        <button onClick={handleNewChat} className="btn-secondary text-sm">
+    <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-brand-dark">AI Restaurant Assistant</h1>
+          <p className="text-sm text-gray-500 mt-1">Your chat follows you across pages and keeps the conversation context alive.</p>
+        </div>
+        <button onClick={resetChat} className="btn-secondary text-sm">
           New Chat
         </button>
       </div>
 
-      {/* Chat window */}
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <div className="flex-1 overflow-y-auto space-y-4 rounded-3xl border border-gray-200 bg-[radial-gradient(circle_at_top_right,rgba(225,81,95,0.12),transparent_40%),linear-gradient(to_bottom,#fff,#f8fafc)] p-4 pb-4 shadow-sm">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : 'order-1'}`}>
-              {/* Bubble */}
               <div
                 className={`px-4 py-3 rounded-2xl text-sm ${
                   msg.role === 'user'
-                    ? 'bg-brand-teal text-white rounded-br-sm'
+                    ? 'bg-[linear-gradient(135deg,#e1515f,#f77f00)] text-white rounded-br-sm'
                     : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
                 }`}
               >
-                {msg.content}
+                {msg.role === 'assistant' ? formatAssistantText(msg.content) : msg.content}
               </div>
 
-              {/* Restaurant cards */}
               {msg.restaurants?.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {msg.restaurants.map((r) => (
@@ -118,7 +111,7 @@ export default function ChatPage() {
                           <span className="text-xs text-gray-500">{r.price_tier}</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5">{r.cuisine_type} · {r.city}</p>
-                        {r.reason && <p className="text-xs text-brand-teal mt-1 italic">"{r.reason}"</p>}
+                        {r.reason && <p className="text-xs text-[#e1515f] mt-1 italic">{r.reason}</p>}
                       </div>
                     </Link>
                   ))}
@@ -128,7 +121,6 @@ export default function ChatPage() {
           </div>
         ))}
 
-        {/* Thinking indicator */}
         {loading && (
           <div className="flex justify-start">
             <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
@@ -143,14 +135,14 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick actions */}
       {messages.length <= 1 && (
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 my-3">
           {QUICK_ACTIONS.map((a) => (
             <button
               key={a}
+              type="button"
               onClick={() => handleSend(a)}
-              className="text-xs px-3 py-1.5 rounded-full border border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white transition-colors"
+              className="text-xs px-3 py-1.5 rounded-full border border-[#e1515f] text-[#e1515f] hover:bg-[#e1515f] hover:text-white transition-colors"
             >
               {a}
             </button>
@@ -158,22 +150,26 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Input */}
       <div className="flex gap-2 pt-2 border-t border-gray-200">
-        <input
-          type="text"
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder="Ask me anything about restaurants..."
-          className="input flex-1"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSend()
+            }
+          }}
+          placeholder="Ask me anything about restaurants, favorites, or review help..."
+          className="input flex-1 min-h-[84px] resize-none"
           disabled={loading}
           aria-label="Chat input"
         />
         <button
+          type="button"
           onClick={() => handleSend()}
           disabled={loading || !input.trim()}
-          className="btn-primary px-5"
+          className="btn-primary px-5 self-end"
           aria-label="Send message"
         >
           Send

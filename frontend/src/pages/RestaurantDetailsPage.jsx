@@ -10,29 +10,38 @@ import {
   addFavorite,
   removeFavorite,
   getFavorites,
+  claimRestaurant,
+  uploadReviewPhoto,
 } from '../services/restaurantService'
 import { isLoggedIn } from '../services/authService'
 import { getProfile } from '../services/userService'
+import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
 // Fallback restaurant images
 const FALLBACK_IMAGES = [
-  'http://localhost:8000/uploads/default_heroes/hero1.png',
-  'http://localhost:8000/uploads/default_heroes/hero2.png',
-  'http://localhost:8000/uploads/default_heroes/hero3.png',
-  'http://localhost:8000/uploads/default_heroes/hero4.png',
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1600&q=80',
 ]
 
 export default function RestaurantDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isCustomer, isOwner, user, authReady } = useAuth()
+  const { showToast } = useToast()
   const [restaurant, setRestaurant] = useState(null)
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [isFav, setIsFav] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' })
+  const [reviewPhoto, setReviewPhoto] = useState(null)
+  const [reviewPhotoPreview, setReviewPhotoPreview] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [claimLoading, setClaimLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
@@ -44,8 +53,14 @@ export default function RestaurantDetailsPage() {
         setReviews(revRes.data)
         if (isLoggedIn()) {
           const [me, favs] = await Promise.all([getProfile(), getFavorites()])
-          setCurrentUserId(me.data.id)
+          const userId = me.data.id
+          setCurrentUserId(userId)
           setIsFav(favs.data.some((f) => f.restaurant_id === Number(id)))
+          const existingReview = (revRes.data || []).find((review) => review.user_id === userId)
+          if (existingReview) {
+            setEditingId(existingReview.id)
+            setReviewForm({ rating: existingReview.rating, comment: existingReview.comment || '' })
+          }
         }
       } catch {
         setError('Failed to load restaurant.')
@@ -56,6 +71,15 @@ export default function RestaurantDetailsPage() {
     load()
   }, [id])
 
+  useEffect(() => {
+    if (!currentUserId) return
+    const existingReview = reviews.find((review) => review.user_id === currentUserId)
+    if (!existingReview) return
+    if (editingId === existingReview.id) return
+    setEditingId(existingReview.id)
+    setReviewForm({ rating: existingReview.rating, comment: existingReview.comment || '' })
+  }, [reviews, currentUserId, editingId])
+
   const handleFavorite = async () => {
     if (!isLoggedIn()) {
       navigate('/login')
@@ -65,36 +89,79 @@ export default function RestaurantDetailsPage() {
       if (isFav) {
         await removeFavorite(id)
         setIsFav(false)
+        showToast('Removed from favorites.')
       } else {
         await addFavorite(id)
         setIsFav(true)
+        showToast('Added to favorites.')
       }
     } catch (err) {
       setError('Failed to update favorite')
+      showToast('Failed to update favorite.', 'error')
+    }
+  }
+
+  const handleClaimRestaurant = async () => {
+    setClaimLoading(true)
+    setError('')
+    try {
+      await claimRestaurant(id)
+      setRestaurant((current) => ({ ...current, owner_id: user?.id }))
+      showToast('Restaurant claimed successfully.')
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to claim restaurant.')
+      showToast(err.response?.data?.detail || 'Failed to claim restaurant.', 'error')
+    } finally {
+      setClaimLoading(false)
     }
   }
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault()
-    if (!isLoggedIn()) {
+    if (!isLoggedIn() || !isCustomer) {
       navigate('/login')
       return
     }
     setSubmitLoading(true)
     try {
+      let savedReview
       if (editingId) {
         const res = await updateReview(editingId, reviewForm)
-        setReviews((prev) => prev.map((r) => (r.id === editingId ? res.data : r)))
-        setEditingId(null)
+        savedReview = res.data
+        setReviews((prev) => prev.map((r) => (r.id === editingId ? savedReview : r)))
       } else {
         const res = await createReview(id, reviewForm)
-        setReviews((prev) => [res.data, ...prev])
+        savedReview = res.data
+        setReviews((prev) => [savedReview, ...prev])
       }
-      setReviewForm({ rating: 5, comment: '' })
+      if (reviewPhoto && savedReview?.id) {
+        const photoRes = await uploadReviewPhoto(savedReview.id, reviewPhoto)
+        setReviews((prev) => prev.map((r) => (r.id === savedReview.id ? photoRes.data : r)))
+      }
+      setEditingId(savedReview.id)
+      setReviewForm({ rating: savedReview.rating, comment: savedReview.comment || '' })
+      setReviewPhoto(null)
+      setReviewPhotoPreview('')
+      setError('')
       setSuccessMsg('Review saved successfully!')
+      showToast('Review saved successfully.')
       setTimeout(() => setSuccessMsg(''), 3000)
-    } catch {
-      setError('Failed to submit review.')
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Failed to submit review.'
+      if (message === 'You already reviewed this restaurant' && currentUserId) {
+        const existingReview = reviews.find((review) => review.user_id === currentUserId)
+        if (existingReview) {
+          setEditingId(existingReview.id)
+          setReviewForm({ rating: existingReview.rating, comment: existingReview.comment || '' })
+          setReviewPhoto(null)
+          setReviewPhotoPreview('')
+          setError('You already reviewed this restaurant. Your existing review is loaded below for editing.')
+          showToast('Loaded your existing review for editing.', 'error')
+          return
+        }
+      }
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setSubmitLoading(false)
     }
@@ -103,6 +170,8 @@ export default function RestaurantDetailsPage() {
   const startEdit = (review) => {
     setEditingId(review.id)
     setReviewForm({ rating: review.rating, comment: review.comment })
+    setReviewPhoto(null)
+    setReviewPhotoPreview('')
   }
 
   const handleDelete = async (reviewId) => {
@@ -110,8 +179,10 @@ export default function RestaurantDetailsPage() {
     try {
       await deleteReview(reviewId)
       setReviews((prev) => prev.filter((r) => r.id !== reviewId))
+      showToast('Review deleted.')
     } catch {
       setError('Failed to delete review.')
+      showToast('Failed to delete review.', 'error')
     }
   }
 
@@ -145,16 +216,16 @@ export default function RestaurantDetailsPage() {
         >
           ← Back
         </button>
-        
-        {/* Favorite Button - Top Right */}
-        {isLoggedIn() && (
-          <button 
-            onClick={handleFavorite}
-            className="absolute top-4 right-4 bg-white rounded-full p-3 hover:bg-gray-100 shadow-md transition-colors"
+
+        {isOwner && user?.id === restaurant.owner_id && (
+          <button
+            onClick={() => navigate(`/owner/restaurants/${restaurant.id}/edit`)}
+            className="absolute top-4 left-24 bg-white rounded-full px-4 py-3 hover:bg-gray-100 shadow-md transition-colors text-sm font-semibold text-gray-700"
           >
-            <span className="text-2xl">{isFav ? '♥' : '♡'}</span>
+            Edit Listing
           </button>
         )}
+        
       </div>
 
       {/* Content Section */}
@@ -182,6 +253,35 @@ export default function RestaurantDetailsPage() {
                 )}
               </div>
             </div>
+            {authReady && !isOwner && (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleFavorite}
+                  className="rounded-full border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50 shadow-sm transition-colors flex items-center gap-2"
+                >
+                  <span className="text-2xl">{isFav ? '♥' : '♡'}</span>
+                  <span className="text-sm font-semibold text-gray-700">{isFav ? 'Saved' : 'Save'}</span>
+                </button>
+                {isOwner && !restaurant.owner_id && (
+                  <button
+                    onClick={handleClaimRestaurant}
+                    disabled={claimLoading}
+                    className="rounded-full border border-[#e1515f] bg-white px-4 py-3 hover:bg-red-50 shadow-sm transition-colors text-sm font-semibold text-[#e1515f] disabled:opacity-60"
+                  >
+                    {claimLoading ? 'Claiming...' : 'Claim Restaurant'}
+                  </button>
+                )}
+              </div>
+            )}
+            {authReady && isOwner && !restaurant.owner_id && (
+              <button
+                onClick={handleClaimRestaurant}
+                disabled={claimLoading}
+                className="rounded-full border border-[#e1515f] bg-white px-4 py-3 hover:bg-red-50 shadow-sm transition-colors text-sm font-semibold text-[#e1515f] disabled:opacity-60"
+              >
+                {claimLoading ? 'Claiming...' : 'Claim Restaurant'}
+              </button>
+            )}
           </div>
 
           {/*Tags */}
@@ -257,16 +357,17 @@ export default function RestaurantDetailsPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Reviews</h2>
 
           {/* Review Form */}
-          {isLoggedIn() && (
+          {isCustomer && (
             <div className="card p-6 mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingId ? '✏️ Edit Your Review' : '✍️ Write a Review'}
               </h3>
               <form onSubmit={handleReviewSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                  <label htmlFor="review-rating" className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                   <div className="flex gap-2 items-center">
                     <select
+                      id="review-rating"
                       value={reviewForm.rating}
                       onChange={(e) => setReviewForm({ ...reviewForm, rating: parseInt(e.target.value) })}
                       className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-[#e1515f] focus:border-transparent"
@@ -288,8 +389,9 @@ export default function RestaurantDetailsPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
+                  <label htmlFor="review-comment" className="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
                   <textarea
+                    id="review-comment"
                     value={reviewForm.comment}
                     onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     placeholder="Share your experience..."
@@ -299,11 +401,33 @@ export default function RestaurantDetailsPage() {
                   />
                 </div>
 
+                <div className="mb-4">
+                  <label htmlFor="review-photo" className="block text-sm font-medium text-gray-700 mb-2">Review Photo</label>
+                  <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 hover:border-[#e1515f] hover:text-[#e1515f]">
+                    <input
+                      id="review-photo"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setReviewPhoto(file)
+                        setReviewPhotoPreview(URL.createObjectURL(file))
+                      }}
+                    />
+                    {reviewPhotoPreview ? 'Change review photo' : 'Attach an optional review photo'}
+                  </label>
+                  {reviewPhotoPreview && (
+                    <img src={reviewPhotoPreview} alt="Review preview" className="mt-3 h-40 w-full rounded-2xl object-cover border border-gray-200" />
+                  )}
+                </div>
+
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    disabled={submitLoading}
-                    className="btn-primary disabled:opacity-50"
+                    disabled={submitLoading || !reviewForm.comment.trim()}
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitLoading ? 'Saving...' : editingId ? 'Update Review' : 'Post Review'}
                   </button>
@@ -313,6 +437,8 @@ export default function RestaurantDetailsPage() {
                       onClick={() => {
                         setEditingId(null)
                         setReviewForm({ rating: 5, comment: '' })
+                        setReviewPhoto(null)
+                        setReviewPhotoPreview('')
                       }}
                       className="btn-secondary"
                     >
@@ -347,7 +473,7 @@ export default function RestaurantDetailsPage() {
                         by {review.user_name || 'Anonymous'} • {new Date(review.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    {isLoggedIn() && currentUserId === review.user_id && (
+                    {isCustomer && currentUserId === review.user_id && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => startEdit(review)}
@@ -364,11 +490,28 @@ export default function RestaurantDetailsPage() {
                       </div>
                     )}
                   </div>
+                  {review.photo_urls?.length > 0 && (
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {review.photo_urls.map((photoUrl) => (
+                        <img
+                          key={photoUrl}
+                          src={`http://localhost:8000${photoUrl}`}
+                          alt="Review attachment"
+                          className="h-40 w-full rounded-2xl object-cover border border-gray-200"
+                        />
+                      ))}
+                    </div>
+                  )}
                   <p className="text-gray-700">{review.comment}</p>
                 </div>
               ))
             )}
           </div>
+          {isOwner && (
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Owner accounts can monitor customer feedback here, but customer-only actions like favorites and posting reviews are disabled.
+            </div>
+          )}
         </div>
       </div>
     </div>

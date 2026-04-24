@@ -47,7 +47,7 @@ class Restaurant(Base):
     phone = Column(String(20))
     hours = Column(String(255))
     image_url = Column(String(500))
-    price_tier = Column(Enum('$', '$$', '$$$', '$$$$'))
+    price_tier = Column(Enum('$', '$$', '$$$', '$$$$', native_enum=False), nullable=True)
     amenities = Column(JSON)
     avg_rating = Column(Float, default=0.0)
     review_count = Column(Integer, default=0)

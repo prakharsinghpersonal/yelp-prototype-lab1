@@ -1,64 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from typing import List
 
-from db.database import get_db
-from models.models import User, Restaurant, Favorite
+from fastapi import APIRouter, Depends, HTTPException, status
+from pymongo.database import Database
+
+from db.database import DuplicateKeyError, get_db, next_sequence, utcnow
 from models.schemas import FavoriteResponse
 from services.auth import get_current_user
+from services.document_utils import serialize_favorite
 
 router = APIRouter(prefix="/favorites", tags=["Favorites"])
 
 
 @router.get("", response_model=List[FavoriteResponse])
-def get_favorites(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all favorite restaurants for the logged-in user"""
-    favorites = db.query(Favorite).filter(Favorite.user_id == current_user.id).all()
+def get_favorites(current_user: dict = Depends(get_current_user), db: Database = Depends(get_db)):
+    favorites = []
+    for favorite in db.favorites.find({"user_id": current_user["id"]}).sort("created_at", -1):
+        restaurant = db.restaurants.find_one({"id": favorite["restaurant_id"]})
+        favorites.append(serialize_favorite(favorite, restaurant))
     return favorites
 
 
 @router.post("/{restaurant_id}", status_code=status.HTTP_201_CREATED)
-def add_favorite(
-    restaurant_id: int, 
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    """Save a restaurant to user's favorites"""
-    # Verify restaurant exists
-    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
+def add_favorite(restaurant_id: int, current_user: dict = Depends(get_current_user), db: Database = Depends(get_db)):
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can manage favorites")
+    restaurant = db.restaurants.find_one({"id": restaurant_id})
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
-        
-    # Check if already favorited
-    existing = db.query(Favorite).filter(
-        Favorite.user_id == current_user.id,
-        Favorite.restaurant_id == restaurant_id
-    ).first()
-    
-    if existing:
+
+    favorite = {
+        "id": next_sequence(db, "favorites"),
+        "user_id": current_user["id"],
+        "restaurant_id": restaurant_id,
+        "created_at": utcnow(),
+    }
+    try:
+        db.favorites.insert_one(favorite)
+    except DuplicateKeyError:
         return {"message": "Already in favorites"}
-        
-    new_fav = Favorite(user_id=current_user.id, restaurant_id=restaurant_id)
-    db.add(new_fav)
-    db.commit()
     return {"message": "Added to favorites successfully"}
 
 
 @router.delete("/{restaurant_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_favorite(
-    restaurant_id: int, 
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    """Remove a restaurant from user's favorites"""
-    fav = db.query(Favorite).filter(
-        Favorite.user_id == current_user.id,
-        Favorite.restaurant_id == restaurant_id
-    ).first()
-    
-    if not fav:
+def remove_favorite(restaurant_id: int, current_user: dict = Depends(get_current_user), db: Database = Depends(get_db)):
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can manage favorites")
+    removed = db.favorites.find_one_and_delete({"user_id": current_user["id"], "restaurant_id": restaurant_id})
+    if not removed:
         raise HTTPException(status_code=404, detail="Favorite not found")
-        
-    db.delete(fav)
-    db.commit()
     return None

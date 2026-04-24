@@ -1,15 +1,34 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { login } from '../services/authService'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { login, ownerLogin } from '../services/authService'
+import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { showToast } = useToast()
+  const { refreshAuth } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const initialRole = searchParams.get('role') === 'owner' ? 'owner' : 'user'
+  const [role, setRole] = useState(initialRole)
+
+  const setRoleSelection = (nextRole) => {
+    setRole(nextRole)
+    const nextParams = new URLSearchParams(searchParams)
+    if (nextRole === 'owner') {
+      nextParams.set('role', 'owner')
+    } else {
+      nextParams.delete('role')
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     setError('')
     if (!form.email || !form.password) {
       setError('Please fill in all fields.')
@@ -17,8 +36,17 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
-      await login(form.email, form.password)
-      navigate('/')
+      if (role === 'owner') {
+        await ownerLogin(form.email, form.password)
+        await refreshAuth()
+        showToast('Owner login successful.')
+        navigate('/owner/dashboard')
+      } else {
+        await login(form.email, form.password)
+        await refreshAuth()
+        showToast('Customer login successful.')
+        navigate('/')
+      }
     } catch (err) {
       const serverErr = err.response?.data?.detail;
       setError(serverErr ? (typeof serverErr === 'string' ? serverErr : JSON.stringify(serverErr)) : err.message || 'Network error or unable to log in.');
@@ -39,6 +67,29 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setRoleSelection('user')}
+            className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+              role === 'user' ? 'border-[#e1515f] bg-red-50 text-[#e1515f]' : 'border-gray-200'
+            }`}
+          >
+            <p className="font-semibold">Customer</p>
+            <p className="text-xs text-gray-500 mt-1">Favorites, reviews, AI</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRoleSelection('owner')}
+            className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+              role === 'owner' ? 'border-[#e1515f] bg-red-50 text-[#e1515f]' : 'border-gray-200'
+            }`}
+          >
+            <p className="font-semibold">Owner</p>
+            <p className="text-xs text-gray-500 mt-1">Restaurants and reviews</p>
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
@@ -72,13 +123,13 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? 'Logging in...' : `Log In as ${role === 'owner' ? 'Owner' : 'Customer'}`}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-brand-teal font-semibold hover:underline">
+          <Link to={role === 'owner' ? '/signup?role=owner' : '/signup'} className="text-brand-teal font-semibold hover:underline">
             Sign up
           </Link>
         </p>

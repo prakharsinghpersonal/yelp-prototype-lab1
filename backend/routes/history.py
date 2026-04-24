@@ -1,43 +1,39 @@
-"""History routes - User activity history (reviews written + restaurants added)"""
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 
 from db.database import get_db
-from models.models import User, Restaurant, Review
 from services.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me/history")
-def get_my_history(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Return the current user's activity history: reviews written and restaurants added"""
-    reviews = db.query(Review).filter(Review.user_id == current_user.id).all()
-    restaurants = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).all()
+def get_my_history(current_user: dict = Depends(get_current_user), db: Database = Depends(get_db)):
+    reviews = list(db.reviews.find({"user_id": current_user["id"]}).sort("created_at", -1))
+    restaurants = list(db.restaurants.find({"owner_id": current_user["id"]}).sort("created_at", -1))
+
+    restaurant_map = {restaurant["id"]: restaurant for restaurant in db.restaurants.find({"id": {"$in": [review["restaurant_id"] for review in reviews]}})}
 
     return {
         "reviews": [
             {
-                "id": r.id,
-                "restaurant_id": r.restaurant_id,
-                "restaurant_name": r.restaurant.name if r.restaurant else "Unknown",
-                "rating": r.rating,
-                "comment": r.comment,
-                "created_at": str(r.created_at) if r.created_at else None,
+                "id": review["id"],
+                "restaurant_id": review["restaurant_id"],
+                "restaurant_name": restaurant_map.get(review["restaurant_id"], {}).get("name", "Unknown"),
+                "rating": review["rating"],
+                "comment": review.get("comment"),
+                "created_at": str(review.get("created_at")) if review.get("created_at") else None,
             }
-            for r in reviews
+            for review in reviews
         ],
         "restaurants_added": [
             {
-                "id": rest.id,
-                "name": rest.name,
-                "cuisine_type": rest.cuisine_type,
-                "city": rest.city,
-                "created_at": str(rest.created_at) if rest.created_at else None,
+                "id": restaurant["id"],
+                "name": restaurant["name"],
+                "cuisine_type": restaurant["cuisine_type"],
+                "city": restaurant.get("city"),
+                "created_at": str(restaurant.get("created_at")) if restaurant.get("created_at") else None,
             }
-            for rest in restaurants
+            for restaurant in restaurants
         ],
     }

@@ -1,19 +1,42 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import RestaurantCard from '../components/RestaurantCard'
-import { getRestaurants } from '../services/restaurantService'
-import { isLoggedIn } from '../services/authService'
+import { addFavorite, getFavorites, getRestaurants, removeFavorite } from '../services/restaurantService'
+import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
 
 export default function ExplorePage() {
+  const { isOwner, isCustomer, isLoggedIn } = useAuth()
+  const { showToast } = useToast()
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingTimeout, setLoadingTimeout] = useState(false)
   const [error, setError] = useState('')
-  const [filters, setFilters] = useState({ q: '', cuisine_type: '', city: '' })
+  const [filters, setFilters] = useState({ q: '', cuisine_type: '', city: '', zip: '' })
+  const [favoriteIds, setFavoriteIds] = useState(new Set())
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState(null)
   const abortControllerRef = useRef(null)
   const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!isLoggedIn || !isCustomer) {
+        setFavoriteIds(new Set())
+        return
+      }
+
+      try {
+        const res = await getFavorites()
+        setFavoriteIds(new Set((res.data || []).map((favorite) => favorite.restaurant_id)))
+      } catch {
+        setFavoriteIds(new Set())
+      }
+    }
+
+    loadFavorites()
+  }, [isCustomer, isLoggedIn])
 
   const fetchRestaurants = useCallback(async (filtersToUse) => {
     // Cancel previous request if still pending
@@ -40,6 +63,7 @@ export default function ExplorePage() {
       if (filtersToUse.q) params.search = filtersToUse.q
       if (filtersToUse.cuisine_type) params.cuisine = filtersToUse.cuisine_type
       if (filtersToUse.city) params.city = filtersToUse.city
+      if (filtersToUse.zip) params.zip_code = filtersToUse.zip
       
       // Pass abort signal to request
       const res = await getRestaurants(params, abortControllerRef.current.signal)
@@ -99,6 +123,34 @@ export default function ExplorePage() {
     // Filters will trigger useEffect automatically
   }
 
+  const handleFavoriteToggle = async (restaurant) => {
+    if (!isCustomer) {
+      showToast('Only customers can save favorites.', 'error')
+      return
+    }
+
+    setFavoriteLoadingId(restaurant.id)
+    try {
+      if (favoriteIds.has(restaurant.id)) {
+        await removeFavorite(restaurant.id)
+        setFavoriteIds((current) => {
+          const next = new Set(current)
+          next.delete(restaurant.id)
+          return next
+        })
+        showToast('Removed from favorites.')
+      } else {
+        await addFavorite(restaurant.id)
+        setFavoriteIds((current) => new Set([...current, restaurant.id]))
+        showToast('Added to favorites.')
+      }
+    } catch (err) {
+      showToast(err.response?.data?.detail || 'Failed to update favorites.', 'error')
+    } finally {
+      setFavoriteLoadingId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -126,22 +178,33 @@ export default function ExplorePage() {
               <span className="text-white font-bold mr-3 hidden md:inline tracking-wide uppercase text-xs">Find</span>
               <input
                 type="text"
-                placeholder="burgers, barbers, spas, handymen..."
+                placeholder="name, wifi, quiet, outdoor seating..."
                 value={filters.q}
                 onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
                 className="w-full bg-transparent text-white placeholder-gray-200 font-medium border-none focus:outline-none focus:ring-0 appearance-none"
                 aria-label="Search restaurants"
               />
             </div>
-            <div className="flex-1 flex items-center px-4 py-3 md:py-2">
+            <div className="flex-1 flex items-center px-4 py-3 md:py-2 border-b md:border-b-0 md:border-r border-white/20">
               <span className="text-white font-bold mr-3 hidden md:inline tracking-wide uppercase text-xs">Near</span>
               <input
                 type="text"
-                placeholder="San Francisco, CA"
+                placeholder="San Jose"
                 value={filters.city}
                 onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
                 className="w-full bg-transparent text-white placeholder-gray-200 font-medium border-none focus:outline-none focus:ring-0 appearance-none"
                 aria-label="Location"
+              />
+            </div>
+            <div className="flex-1 flex items-center px-4 py-3 md:py-2">
+              <span className="text-white font-bold mr-3 hidden md:inline tracking-wide uppercase text-xs">Zip</span>
+              <input
+                type="text"
+                placeholder="95112"
+                value={filters.zip}
+                onChange={(e) => setFilters((f) => ({ ...f, zip: e.target.value.replace(/\D/g, '').slice(0, 5) }))}
+                className="w-full bg-transparent text-white placeholder-gray-200 font-medium border-none focus:outline-none focus:ring-0 appearance-none"
+                aria-label="ZIP code"
               />
             </div>
             <button 
@@ -183,9 +246,9 @@ export default function ExplorePage() {
       </div>
 
       {/* Categories (Yelp style category boxes) */}
-      <div id="categories" className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-center mb-8 text-gray-900">Categories</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
+      <div id="categories" className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">Categories</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {CUISINES.map((c) => (
             <button
               key={c}
@@ -204,10 +267,32 @@ export default function ExplorePage() {
         </div>
       </div>
 
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="rounded-2xl border border-gray-200 bg-[linear-gradient(135deg,rgba(252,191,73,0.08),rgba(225,81,95,0.08))] px-4 py-4 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e1515f]">Browse Snapshot</p>
+              <p className="mt-1 text-sm text-gray-600">
+                {filters.cuisine_type ? `${filters.cuisine_type} picks` : 'All cuisines'}
+                {filters.city ? ` in ${filters.city}` : filters.zip ? ` near ${filters.zip}` : ' near your search area'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 shadow-sm">
+                {restaurants.length} places
+              </span>
+              <span className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 shadow-sm">
+                {filters.q ? `Keywords: ${filters.q}` : 'Top rated first'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Separator / Recent Activity Header */}
-      <div className="max-w-7xl mx-auto px-4 pb-4 pt-6 text-center border-t border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 pb-2 pt-2 text-center border-t border-gray-200">
         <h2 className="text-2xl font-bold text-[#d62828] mb-1">Recommended Restaurants</h2>
-        <p className="text-sm text-gray-500 mb-8">Discover top-rated places around you based on recent activity</p>
+        <p className="text-sm text-gray-500 mb-4">Discover top-rated places around you based on recent activity</p>
       </div>
 
 
@@ -248,16 +333,28 @@ export default function ExplorePage() {
         {!loading && !error && restaurants.length === 0 && (
           <div className="text-center py-16 text-gray-500">
             <p className="text-xl mb-2">No restaurants found</p>
-            <p className="text-sm">Try a different search or{' '}
-              <Link to="/add-restaurant" className="text-yelp-red hover:underline">
-                add one
-              </Link>
+            <p className="text-sm">
+              Try a different search or{' '}
+              {isOwner ? (
+                <Link to="/owner/restaurants/new" className="text-yelp-red hover:underline">
+                  add one
+                </Link>
+              ) : (
+                'adjust your filters'
+              )}
             </p>
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {restaurants.map((r) => (
-            <RestaurantCard key={r.id} restaurant={r} />
+            <RestaurantCard
+              key={r.id}
+              restaurant={r}
+              showFavoriteAction={isCustomer}
+              isFavorite={favoriteIds.has(r.id)}
+              favoriteLoading={favoriteLoadingId === r.id}
+              onFavorite={handleFavoriteToggle}
+            />
           ))}
         </div>
       </div>

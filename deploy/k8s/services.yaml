@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: yelp-lab2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: your-dockerhub-user/yelp-user-service:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_INLINE_CONSUMER
+              value: "true"
+            - name: SECRET_KEY
+              value: replace-me
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: yelp-lab2
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: owner-service
+  namespace: yelp-lab2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: owner-service
+  template:
+    metadata:
+      labels:
+        app: owner-service
+    spec:
+      containers:
+        - name: owner-service
+          image: your-dockerhub-user/yelp-owner-service:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_INLINE_CONSUMER
+              value: "true"
+            - name: SECRET_KEY
+              value: replace-me
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: owner-service
+  namespace: yelp-lab2
+spec:
+  selector:
+    app: owner-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-service
+  namespace: yelp-lab2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: restaurant-service
+  template:
+    metadata:
+      labels:
+        app: restaurant-service
+    spec:
+      containers:
+        - name: restaurant-service
+          image: your-dockerhub-user/yelp-restaurant-service:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_INLINE_CONSUMER
+              value: "true"
+            - name: SECRET_KEY
+              value: replace-me
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restaurant-service
+  namespace: yelp-lab2
+spec:
+  selector:
+    app: restaurant-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service
+  namespace: yelp-lab2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      labels:
+        app: review-service
+    spec:
+      containers:
+        - name: review-service
+          image: your-dockerhub-user/yelp-review-service:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_INLINE_CONSUMER
+              value: "true"
+            - name: SECRET_KEY
+              value: replace-me
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: review-service
+  namespace: yelp-lab2
+spec:
+  selector:
+    app: review-service
+  ports:
+    - port: 8000
+      targetPort: 8000

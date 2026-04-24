@@ -9,6 +9,12 @@ export const getRestaurant = (id) => api.get(`/restaurants/${id}`)
 
 export const createRestaurant = (data) => api.post('/restaurants', data)
 
+export const updateRestaurant = (restaurantId, data) =>
+  api.put(`/restaurants/${restaurantId}`, data)
+
+export const deleteRestaurant = (restaurantId) =>
+  api.delete(`/restaurants/${restaurantId}`)
+
 export const getReviews = (restaurantId) =>
   api.get(`/restaurants/${restaurantId}/reviews`)
 
@@ -31,6 +37,12 @@ export const uploadRestaurantPhoto = (restaurantId, file) => {
   const formData = new FormData()
   formData.append('file', file)
   return api.post(`/restaurants/${restaurantId}/photos`, formData)
+}
+
+export const uploadReviewPhoto = (reviewId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post(`/reviews/${reviewId}/photos`, formData)
 }
 
 export const claimRestaurant = (restaurantId) =>

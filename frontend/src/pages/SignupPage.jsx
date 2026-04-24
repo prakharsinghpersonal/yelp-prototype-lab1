@@ -1,13 +1,20 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { signup, login } from '../services/authService'
-import { COUNTRY_CODES, STATES_BY_COUNTRY, COUNTRIES } from '../utils/locations'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ownerSignup, signup, applyAuthToken } from '../services/authService'
+import { COUNTRY_CODES, STATES_BY_COUNTRY, COUNTRIES, normalizeCountry } from '../utils/locations'
+import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { showToast } = useToast()
+  const { refreshAuth } = useAuth()
+  const initialRole = searchParams.get('role') === 'owner' ? 'owner' : 'user'
   const [form, setForm] = useState({ 
     name: '', email: '', password: '', confirm: '',
-    country: '', city: '', state: '', zip: '', phone: ''
+    country: '', city: '', state: '', zip: '', phone: '', role: initialRole,
+    restaurant_name: '', restaurant_location: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,12 +22,23 @@ export default function SignupPage() {
   const setPhone = (e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))
   const setZip = (e) => setForm((f) => ({ ...f, zip: e.target.value.replace(/\D/g, '').slice(0, 5) }))
   const setCountry = (e) => setForm((f) => ({ ...f, country: e.target.value, state: '' }))
+  const setRoleSelection = (role) => {
+    setForm((current) => ({ ...current, role }))
+    const nextParams = new URLSearchParams(searchParams)
+    if (role === 'owner') {
+      nextParams.set('role', 'owner')
+    } else {
+      nextParams.delete('role')
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
 
   const validate = () => {
     if (!form.name || !form.email || !form.password || !form.country || !form.city) return 'Name, Email, Password, Country, and City are required.'
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Invalid email address.'
     if (form.password.length < 6) return 'Password must be at least 6 characters.'
     if (form.password !== form.confirm) return 'Passwords do not match.'
+    if (form.role === 'owner' && !form.restaurant_location) return 'Restaurant location is required for owner signup.'
     if (form.phone && form.phone.length !== 10) return 'Phone number must be exactly 10 digits.'
     if (form.zip && form.zip.length !== 5) return 'Zip code must be exactly 5 digits.'
     if (form.state && form.country && STATES_BY_COUNTRY[form.country] && !STATES_BY_COUNTRY[form.country].includes(form.state)) {
@@ -31,26 +49,32 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     const validationError = validate()
     if (validationError) { setError(validationError); return }
     setError('')
     setLoading(true)
     try {
-      const fullPhone = form.phone && COUNTRY_CODES[form.country] ? `${COUNTRY_CODES[form.country]} ${form.phone}` : form.phone
-      await signup({ 
+      const country = normalizeCountry(form.country)
+      const fullPhone = form.phone && COUNTRY_CODES[country] ? `${COUNTRY_CODES[country]} ${form.phone}` : form.phone
+      const payload = { 
         name: form.name, 
         email: form.email, 
         password: form.password,
-        country: form.country,
+        country,
         city: form.city,
         state: form.state ? form.state.toUpperCase() : '',
         zip_code: form.zip,
-        phone: fullPhone
-      })
-      await login(form.email, form.password)
-      // Small delay to ensure token and events are processed
-      await new Promise(resolve => setTimeout(resolve, 100))
-      navigate('/')
+        phone: fullPhone,
+        role: form.role,
+        restaurant_name: form.role === 'owner' ? form.restaurant_name : undefined,
+        restaurant_location: form.role === 'owner' ? form.restaurant_location : undefined,
+      }
+      const res = form.role === 'owner' ? await ownerSignup(payload) : await signup(payload)
+      applyAuthToken(res.data.access_token)
+      await refreshAuth()
+      showToast(`${form.role === 'owner' ? 'Owner' : 'Customer'} account created successfully.`)
+      navigate(form.role === 'owner' ? '/owner/dashboard' : '/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Signup failed. Email may already be in use.')
     } finally {
@@ -58,7 +82,7 @@ export default function SignupPage() {
     }
   }
 
-  const field = (id, label, type = 'text', autoComplete = '') => (
+  const field = (id, label, type = 'text', autoComplete = '', required = true) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
@@ -70,7 +94,7 @@ export default function SignupPage() {
         value={form[id]}
         onChange={(e) => setForm((f) => ({ ...f, [id]: e.target.value }))}
         autoComplete={autoComplete}
-        required
+        required={required}
       />
     </div>
   )
@@ -89,6 +113,29 @@ export default function SignupPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Create account as</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: 'user', label: 'Customer', sub: 'Find, favorite, review' },
+                { value: 'owner', label: 'Owner', sub: 'Manage restaurants' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setRoleSelection(option.value)}
+                  className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                    form.role === option.value
+                      ? 'border-[#e1515f] bg-red-50 text-[#e1515f]'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-[#e1515f]'
+                  }`}
+                >
+                  <p className="font-semibold">{option.label}</p>
+                  <p className="text-xs text-gray-500 mt-1">{option.sub}</p>
+                </button>
+              ))}
+            </div>
+          </div>
           {field('name', 'Full Name *', 'text', 'name')}
           {field('email', 'Email *', 'email', 'email')}
           
@@ -101,8 +148,8 @@ export default function SignupPage() {
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Location & Contact</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                <select className="input" value={form.country} onChange={setCountry} required>
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                <select id="country" className="input" value={form.country} onChange={setCountry} required>
                   <option value="">Select country...</option>
                   {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -112,14 +159,15 @@ export default function SignupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">State</label>
                 {form.country && STATES_BY_COUNTRY[form.country] ? (
-                  <select className="input" value={form.state} onChange={(e) => setForm(f => ({ ...f, state: e.target.value }))}>
+                  <select id="state" className="input" value={form.state} onChange={(e) => setForm(f => ({ ...f, state: e.target.value }))}>
                     <option value="">Select state...</option>
                     {STATES_BY_COUNTRY[form.country].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 ) : (
                   <input 
+                    id="state"
                     type="text" 
                     className="input" 
                     value={form.state} 
@@ -130,18 +178,19 @@ export default function SignupPage() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
-                <input type="text" className="input" value={form.zip} onChange={setZip} maxLength={5} placeholder="5 digits" />
+                <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
+                <input id="zip" type="text" className="input" value={form.zip} onChange={setZip} maxLength={5} placeholder="5 digits" />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm font-medium">
                   {form.country ? COUNTRY_CODES[form.country] || '+' : '+?'}
                 </span>
                 <input 
+                  id="phone"
                   type="tel" 
                   className="input rounded-l-none" 
                   value={form.phone} 
@@ -154,15 +203,25 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full mt-6">
+          {form.role === 'owner' && (
+            <div className="border-t pt-4 mt-2">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Restaurant Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('restaurant_name', 'Restaurant Name', 'text', '', false)}
+                {field('restaurant_location', 'Restaurant Location *', 'text')}
+              </div>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className="btn-primary w-full mt-6 disabled:opacity-60 disabled:cursor-not-allowed">
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-brand-teal font-semibold hover:underline">
-            Log in
+          <Link to={form.role === 'owner' ? '/login?role=owner' : '/login'} className="text-brand-teal font-semibold hover:underline">
+            {form.role === 'owner' ? 'Owner login' : 'Customer login'}
           </Link>
         </p>
       </div>

@@ -1,37 +1,86 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+from __future__ import annotations
 
-# Load environment variables from the .env file
+import os
+from datetime import datetime, timezone
+
+from dotenv import load_dotenv
+from pymongo import ASCENDING, DESCENDING, MongoClient
+from pymongo.collection import Collection
+from pymongo.database import Database
+from pymongo.errors import DuplicateKeyError
+from pymongo import ReturnDocument
+
 load_dotenv()
 
-# Get the database URL from the environment variables.
-# We expect something like: mysql+pymysql://root:password@localhost:3306/yelp_db
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "yelp_lab2")
 
-# Create the SQLAlchemy "Engine"
-# The engine is the starting point for any SQLAlchemy application.
-# It acts as a central source of connections to a particular database,
-# providing both a factory and a connection pool.
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+_client = MongoClient(MONGODB_URI)
+_db = _client[MONGODB_DB_NAME]
 
-# Create a "SessionLocal" class
-# Each instance of this class will be a database session.
-# The class itself is not a database session yet.
-# We use autocommit=False and autoflush=False to have more manual control over when data is saved.
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create a Base class
-# Later, we will inherit from this class to create each of the database models or classes (the ORM models)
-Base = declarative_base()
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
-# Dependency to get the database session
-# We will use this function in our FastAPI routes to provide a database session
-# for a single request, and then close it once the request is finished.
+
+def get_database() -> Database:
+    return _db
+
+
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    yield _db
+
+
+def next_sequence(db: Database, name: str) -> int:
+    counter = db.counters.find_one_and_update(
+        {"_id": name},
+        {"$inc": {"value": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return int(counter["value"])
+
+
+def ensure_indexes(db: Database | None = None) -> None:
+    database = db if db is not None else _db
+    database.users.create_index([("id", ASCENDING)], unique=True)
+    database.users.create_index([("email", ASCENDING)], unique=True)
+    database.users.create_index([("role", ASCENDING)])
+
+    database.restaurants.create_index([("id", ASCENDING)], unique=True)
+    database.restaurants.create_index([("owner_id", ASCENDING)])
+    database.restaurants.create_index([("city", ASCENDING)])
+    database.restaurants.create_index([("avg_rating", DESCENDING)])
+
+    database.reviews.create_index([("id", ASCENDING)], unique=True)
+    database.reviews.create_index(
+        [("restaurant_id", ASCENDING), ("user_id", ASCENDING)],
+        unique=True,
+    )
+    database.reviews.create_index([("restaurant_id", ASCENDING), ("created_at", DESCENDING)])
+
+    database.favorites.create_index([("id", ASCENDING)], unique=True)
+    database.favorites.create_index(
+        [("user_id", ASCENDING), ("restaurant_id", ASCENDING)],
+        unique=True,
+    )
+
+    database.user_preferences.create_index([("user_id", ASCENDING)], unique=True)
+    database.sessions.create_index([("token", ASCENDING)], unique=True)
+    database.sessions.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    database.events.create_index([("event_id", ASCENDING)], unique=True)
+    database.events.create_index([("topic", ASCENDING), ("created_at", DESCENDING)])
+
+
+__all__ = [
+    "Collection",
+    "Database",
+    "DuplicateKeyError",
+    "MONGODB_DB_NAME",
+    "MONGODB_URI",
+    "ensure_indexes",
+    "get_database",
+    "get_db",
+    "next_sequence",
+    "utcnow",
+]

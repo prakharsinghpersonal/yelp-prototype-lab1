@@ -12,6 +12,8 @@ class SignupRequest(BaseModel):
     country: Optional[str] = None
     zip_code: Optional[str] = None
     role: Optional[str] = "user"
+    restaurant_name: Optional[str] = None
+    restaurant_location: Optional[str] = None
 
 class OwnerSignupRequest(BaseModel):
     name: str
@@ -32,6 +34,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+    session_id: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
@@ -39,6 +42,12 @@ class UserResponse(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     role: str
+    about_me: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    language: Optional[str] = None
+    gender: Optional[str] = None
     profile_pic_url: Optional[str] = None
     
     class Config:
@@ -63,6 +72,7 @@ class RestaurantCreate(BaseModel):
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
+    country: Optional[str] = None
     zip_code: Optional[str] = None
     phone: Optional[str] = None
     hours: Optional[str] = None
@@ -78,6 +88,7 @@ class RestaurantResponse(BaseModel):
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
+    country: Optional[str] = None
     zip_code: Optional[str] = None
     phone: Optional[str] = None
     hours: Optional[str] = None
@@ -101,6 +112,10 @@ class ReviewResponse(BaseModel):
     user_id: int
     rating: int
     comment: Optional[str] = None
+    status: Optional[str] = None
+    user_name: Optional[str] = None
+    created_at: Optional[str] = None
+    photo_urls: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -158,3 +173,19 @@ class AIChatResponse(BaseModel):
     response: str
     restaurants: List[RestaurantBrief] = []
 
+class AutofillRequest(BaseModel):
+    name: str
+    city: str
+
+class AutofillResponse(BaseModel):
+    name: Optional[str] = None
+    cuisine_type: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    phone: Optional[str] = None
+    hours: Optional[str] = None
+    price_tier: Optional[str] = None
+    amenities: Optional[List[str]] = []
+    image_url: Optional[str] = None

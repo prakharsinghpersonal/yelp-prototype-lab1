@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { getProfile, updateProfile, getPreferences, updatePreferences, uploadProfilePhoto } from '../services/userService'
+import { getOwnerDashboard } from '../services/restaurantService'
+import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
-import { COUNTRY_CODES, STATES_BY_COUNTRY, COUNTRIES } from '../utils/locations'
+import { COUNTRY_CODES, STATES_BY_COUNTRY, COUNTRIES, normalizeCountry } from '../utils/locations'
 
 const CUISINES = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'Mediterranean']
 const DIETARY = ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Kosher']
@@ -10,18 +13,25 @@ const PRICE_TIERS = ['$', '$$', '$$$', '$$$$']
 const SORT_OPTIONS = ['rating', 'distance', 'popularity', 'price']
 
 export default function ProfilePage() {
+  const { isOwner } = useAuth()
+  const { showToast } = useToast()
   const [tab, setTab] = useState('profile')
   const [profile, setProfile] = useState(null)
   const [prefs, setPrefs] = useState(null)
+  const [ownerRestaurants, setOwnerRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [profileDirty, setProfileDirty] = useState(false)
+  const [prefsDirty, setPrefsDirty] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [p, pref] = await Promise.all([getProfile(), getPreferences()])
+        const requests = [getProfile(), getPreferences()]
+        if (isOwner) requests.push(getOwnerDashboard())
+        const [p, pref, ownerDashboard] = await Promise.all(requests)
         
         // Strip any existing country codes from db response so only 10 digits are shown in UI
         let cleanPhone = p.data.phone || ''
@@ -32,11 +42,12 @@ export default function ProfilePage() {
           if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10)
         }
         
-        setProfile({ ...p.data, phone: cleanPhone })
+        setProfile({ ...p.data, country: normalizeCountry(p.data.country), phone: cleanPhone })
         setPrefs(pref.data || {
           cuisines: [], price_range: '', preferred_locations: [],
           dietary_needs: [], ambiance: [], sort_preference: 'rating',
         })
+        setOwnerRestaurants(ownerDashboard?.data?.all_restaurants || [])
       } catch {
         setError('Failed to load profile.')
       } finally {
@@ -44,7 +55,7 @@ export default function ProfilePage() {
       }
     }
     load()
-  }, [])
+  }, [isOwner])
 
   const handleProfileSave = async (e) => {
     e.preventDefault()
@@ -66,14 +77,19 @@ export default function ProfilePage() {
       if (dataToSave.state) dataToSave.state = dataToSave.state.toUpperCase()
       
       // Prepend country code directly for the database
+      dataToSave.country = normalizeCountry(dataToSave.country)
       if (dataToSave.phone && dataToSave.country && COUNTRY_CODES[dataToSave.country]) {
         dataToSave.phone = `${COUNTRY_CODES[dataToSave.country]} ${dataToSave.phone}`
       }
       
       await updateProfile(dataToSave)
       setMessage('Profile updated successfully.')
+      setProfileDirty(false)
+      window.dispatchEvent(new Event('profile-updated'))
+      showToast('Profile updated successfully.')
     } catch {
       setError('Failed to update profile.')
+      showToast('Failed to update profile.', 'error')
     } finally {
       setSaving(false)
     }
@@ -85,8 +101,11 @@ export default function ProfilePage() {
     try {
       await updatePreferences(prefs)
       setMessage('Preferences saved.')
+      setPrefsDirty(false)
+      showToast('Preferences saved.')
     } catch {
       setError('Failed to save preferences.')
+      showToast('Failed to save preferences.', 'error')
     } finally {
       setSaving(false)
     }
@@ -101,8 +120,10 @@ export default function ProfilePage() {
       // Keep our clean phone number state
       setProfile({ ...res.data, phone: profile.phone })
       setMessage('Profile photo updated.')
+      showToast('Profile photo updated.')
     } catch {
       setError('Failed to upload photo.')
+      showToast('Failed to upload photo.', 'error')
     } finally {
       setSaving(false)
     }
@@ -122,8 +143,9 @@ export default function ProfilePage() {
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-gray-200 mb-6">
-        {['profile', 'preferences'].map((t) => (
+        {['profile', ...(isOwner ? [] : ['preferences'])].map((t) => (
           <button
+            type="button"
             key={t}
             onClick={() => setTab(t)}
             className={`pb-2 text-sm font-medium capitalize border-b-2 transition-colors ${
@@ -158,28 +180,29 @@ export default function ProfilePage() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <PField label="Full Name" value={profile.name || ''} onChange={(v) => setProfile((p) => ({ ...p, name: v }))} />
-            <PField label="Email" value={profile.email || ''} onChange={(v) => setProfile((p) => ({ ...p, email: v }))} type="email" />
+            <PField label="Full Name" value={profile.name || ''} onChange={(v) => { setProfileDirty(true); setProfile((p) => ({ ...p, name: v })) }} />
+            <PField label="Email" value={profile.email || ''} onChange={(v) => { setProfileDirty(true); setProfile((p) => ({ ...p, email: v })) }} type="email" />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Country First *</label>
-              <select className="input" value={profile.country || ''} onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value, state: '' }))}>
-                <option value="">Select country...</option>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+              <div>
+                <label htmlFor="profile-country" className="block text-sm font-medium text-gray-700 mb-1">Country First *</label>
+                <select id="profile-country" className="input" value={profile.country || ''} onChange={(e) => { setProfileDirty(true); setProfile((p) => ({ ...p, country: e.target.value, state: '' })) }}>
+                  <option value="">Select country...</option>
+                  {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm font-medium">
-                  {profile.country ? COUNTRY_CODES[profile.country] || '+' : '+?'}
-                </span>
-                <input 
-                  type="tel" 
-                  className="input rounded-l-none" 
-                  value={profile.phone || ''} 
-                  onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} 
+              <div>
+                <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm font-medium">
+                    {profile.country ? COUNTRY_CODES[profile.country] || '+' : '+?'}
+                  </span>
+                  <input 
+                    id="profile-phone"
+                    type="tel" 
+                    className="input rounded-l-none" 
+                    value={profile.phone || ''} 
+                  onChange={(e) => { setProfileDirty(true); setProfile((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })) }} 
                   placeholder={profile.country ? "10 digits" : "Select country above"}
                   maxLength={10} 
                   disabled={!profile.country}
@@ -187,20 +210,21 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <PField label="City" value={profile.city || ''} onChange={(v) => setProfile((p) => ({ ...p, city: v }))} />
+            <PField label="City" value={profile.city || ''} onChange={(v) => { setProfileDirty(true); setProfile((p) => ({ ...p, city: v })) }} />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <label htmlFor="profile-state" className="block text-sm font-medium text-gray-700 mb-1">State</label>
               {profile.country && STATES_BY_COUNTRY[profile.country] ? (
-                <select className="input" value={profile.state || ''} onChange={(e) => setProfile(p => ({ ...p, state: e.target.value }))}>
+                <select id="profile-state" className="input" value={profile.state || ''} onChange={(e) => { setProfileDirty(true); setProfile(p => ({ ...p, state: e.target.value })) }}>
                   <option value="">Select state...</option>
                   {STATES_BY_COUNTRY[profile.country].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               ) : (
                 <input 
+                  id="profile-state"
                   type="text" 
                   className="input" 
                   value={profile.state || ''} 
-                  onChange={(e) => setProfile(p => ({ ...p, state: e.target.value }))} 
+                  onChange={(e) => { setProfileDirty(true); setProfile(p => ({ ...p, state: e.target.value })) }} 
                   placeholder={profile.country ? "Enter state/region" : "Select country first"}
                   disabled={!profile.country}
                 />
@@ -208,8 +232,8 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <select className="input" value={profile.gender || ''} onChange={(e) => setProfile((p) => ({ ...p, gender: e.target.value }))}>
+              <label htmlFor="profile-gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <select id="profile-gender" className="input" value={profile.gender || ''} onChange={(e) => { setProfileDirty(true); setProfile((p) => ({ ...p, gender: e.target.value })) }}>
                 <option value="">Prefer not to say</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -218,27 +242,52 @@ export default function ProfilePage() {
               </select>
             </div>
 
-            <PField label="Languages" value={profile.language || ''} onChange={(v) => setProfile((p) => ({ ...p, language: v }))} placeholder="e.g. English, Spanish" />
+            <PField
+              label="Languages"
+              value={profile.language || ''}
+              onChange={(v) => {
+                setProfileDirty(true)
+                setProfile((p) => ({ ...p, language: v }))
+              }}
+              placeholder="e.g. English, Spanish"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">About Me</label>
-            <textarea rows={3} className="input" value={profile.about_me || ''} onChange={(e) => setProfile((p) => ({ ...p, about_me: e.target.value }))} />
+            <label htmlFor="profile-about-me" className="block text-sm font-medium text-gray-700 mb-1">About Me</label>
+            <textarea id="profile-about-me" rows={3} className="input" value={profile.about_me || ''} onChange={(e) => { setProfileDirty(true); setProfile((p) => ({ ...p, about_me: e.target.value })) }} />
           </div>
 
-          <button type="submit" disabled={saving} className="btn-primary">
+          {isOwner && (
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Owned Restaurants</h3>
+              {ownerRestaurants.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {ownerRestaurants.map((restaurant) => (
+                    <span key={restaurant.id} className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-200">
+                      {restaurant.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No restaurants owned yet.</p>
+              )}
+            </div>
+          )}
+
+          <button type="submit" disabled={saving || !profileDirty} className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed">
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
         </form>
       )}
 
       {/* Preferences Tab */}
-      {tab === 'preferences' && prefs && (
+      {tab === 'preferences' && prefs && !isOwner && (
         <form onSubmit={handlePrefsSave} className="card p-6 space-y-6">
           <Section title="Cuisine Preferences">
             <div className="flex flex-wrap gap-2">
               {CUISINES.map((c) => (
-                <Chip key={c} label={c} active={prefs.cuisines?.includes(c)} onClick={() => toggleArr('cuisines', c)} />
+                <Chip key={c} label={c} active={prefs.cuisines?.includes(c)} onClick={() => { setPrefsDirty(true); toggleArr('cuisines', c) }} />
               ))}
             </div>
           </Section>
@@ -246,7 +295,7 @@ export default function ProfilePage() {
           <Section title="Price Range">
             <div className="flex gap-2">
               {PRICE_TIERS.map((p) => (
-                <Chip key={p} label={p} active={prefs.price_range === p} onClick={() => setPrefs((pr) => ({ ...pr, price_range: p }))} />
+                <Chip key={p} label={p} active={prefs.price_range === p} onClick={() => { setPrefsDirty(true); setPrefs((pr) => ({ ...pr, price_range: p })) }} />
               ))}
             </div>
           </Section>
@@ -254,7 +303,7 @@ export default function ProfilePage() {
           <Section title="Dietary Needs">
             <div className="flex flex-wrap gap-2">
               {DIETARY.map((d) => (
-                <Chip key={d} label={d} active={prefs.dietary_needs?.includes(d)} onClick={() => toggleArr('dietary_needs', d)} />
+                <Chip key={d} label={d} active={prefs.dietary_needs?.includes(d)} onClick={() => { setPrefsDirty(true); toggleArr('dietary_needs', d) }} />
               ))}
             </div>
           </Section>
@@ -262,7 +311,7 @@ export default function ProfilePage() {
           <Section title="Ambiance Preferences">
             <div className="flex flex-wrap gap-2">
               {AMBIANCE.map((a) => (
-                <Chip key={a} label={a} active={prefs.ambiance?.includes(a)} onClick={() => toggleArr('ambiance', a)} />
+                <Chip key={a} label={a} active={prefs.ambiance?.includes(a)} onClick={() => { setPrefsDirty(true); toggleArr('ambiance', a) }} />
               ))}
             </div>
           </Section>
@@ -270,12 +319,12 @@ export default function ProfilePage() {
           <Section title="Sort Preference">
             <div className="flex flex-wrap gap-2">
               {SORT_OPTIONS.map((s) => (
-                <Chip key={s} label={s} active={prefs.sort_preference === s} onClick={() => setPrefs((p) => ({ ...p, sort_preference: s }))} />
+                <Chip key={s} label={s} active={prefs.sort_preference === s} onClick={() => { setPrefsDirty(true); setPrefs((p) => ({ ...p, sort_preference: s })) }} />
               ))}
             </div>
           </Section>
 
-          <button type="submit" disabled={saving} className="btn-primary">
+          <button type="submit" disabled={saving || !prefsDirty} className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed">
             {saving ? 'Saving...' : 'Save Preferences'}
           </button>
         </form>

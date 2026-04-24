@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-worker
+  namespace: yelp-lab2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-worker
+  template:
+    metadata:
+      labels:
+        app: review-worker
+    spec:
+      containers:
+        - name: review-worker
+          image: your-dockerhub-user/yelp-kafka-worker:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_TOPICS
+              value: review.created,review.updated,review.deleted
+            - name: KAFKA_GROUP_ID
+              value: review-workers
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-worker
+  namespace: yelp-lab2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restaurant-worker
+  template:
+    metadata:
+      labels:
+        app: restaurant-worker
+    spec:
+      containers:
+        - name: restaurant-worker
+          image: your-dockerhub-user/yelp-kafka-worker:latest
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: MONGODB_DB_NAME
+              value: yelp_lab2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: KAFKA_TOPICS
+              value: restaurant.created,restaurant.updated,restaurant.claimed,restaurant.deleted
+            - name: KAFKA_GROUP_ID
+              value: restaurant-workers
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: yelp-lab2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: your-dockerhub-user/yelp-frontend:latest
+          env:
+            - name: VITE_USER_SERVICE_URL
+              value: http://user-service:8000
+            - name: VITE_OWNER_SERVICE_URL
+              value: http://owner-service:8000
+            - name: VITE_RESTAURANT_SERVICE_URL
+              value: http://restaurant-service:8000
+            - name: VITE_REVIEW_SERVICE_URL
+              value: http://review-service:8000
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: yelp-lab2
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 3000

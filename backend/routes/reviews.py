@@ -1,112 +1,133 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+import os
+import shutil
+import uuid
 from typing import List
 
-from db.database import get_db
-from models.models import User, Restaurant, Review
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pymongo.database import Database
+
+from db.database import get_db, utcnow
 from models.schemas import ReviewCreate, ReviewResponse
 from services.auth import get_current_user
+from services.document_utils import serialize_review
+from services.event_bus import publish_event
 
-# Router for /restaurants/{id}/reviews endpoints
 router = APIRouter(tags=["Reviews"])
 
 
-def _recalculate_rating(db: Session, restaurant_id: int):
-    """Recalculate avg_rating and review_count for a restaurant from all its reviews"""
-    result = db.query(
-        func.count(Review.id),
-        func.coalesce(func.avg(Review.rating), 0)
-    ).filter(Review.restaurant_id == restaurant_id).first()
-
-    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
-    if restaurant:
-        restaurant.review_count = result[0]
-        restaurant.avg_rating = round(float(result[1]), 1)
-
-
-# --- GET REVIEWS FOR A RESTAURANT (Public) ---
 @router.get("/restaurants/{restaurant_id}/reviews", response_model=List[ReviewResponse])
-def get_restaurant_reviews(restaurant_id: int, db: Session = Depends(get_db)):
-    """Fetch all reviews for a specific restaurant"""
-    return db.query(Review).filter(Review.restaurant_id == restaurant_id).all()
+def get_restaurant_reviews(restaurant_id: int, db: Database = Depends(get_db)):
+    reviews = db.reviews.find({"restaurant_id": restaurant_id}).sort("created_at", -1)
+    user_ids = [review["user_id"] for review in reviews]
+    users = {user["id"]: user for user in db.users.find({"id": {"$in": user_ids}})}
+    return [
+        {
+            **serialize_review(review),
+            "user_name": users.get(review["user_id"], {}).get("name", "Anonymous"),
+            "created_at": str(review.get("created_at")) if review.get("created_at") else None,
+        }
+        for review in reviews
+    ]
 
 
-# --- CREATE A REVIEW (Protected) ---
 @router.post("/restaurants/{restaurant_id}/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
 def create_review(
     restaurant_id: int,
     req: ReviewCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(get_current_user),
+    db: Database = Depends(get_db),
 ):
-    """Leave a review for a restaurant"""
-    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can create reviews")
+    restaurant = db.restaurants.find_one({"id": restaurant_id})
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
-
-    existing = db.query(Review).filter(
-        Review.restaurant_id == restaurant_id,
-        Review.user_id == current_user.id
-    ).first()
+    existing = db.reviews.find_one({"restaurant_id": restaurant_id, "user_id": current_user["id"]})
     if existing:
         raise HTTPException(status_code=400, detail="You already reviewed this restaurant")
-
-    new_review = Review(
-        user_id=current_user.id,
-        restaurant_id=restaurant_id,
-        rating=req.rating,
-        comment=req.comment
+    return publish_event(
+        db,
+        "review.created",
+        {
+            "restaurant_id": restaurant_id,
+            "user_id": current_user["id"],
+            "rating": req.rating,
+            "comment": req.comment,
+        },
     )
-    db.add(new_review)
-    _recalculate_rating(db, restaurant_id)
-
-    db.commit()
-    db.refresh(new_review)
-    return new_review
 
 
-# --- UPDATE OWN REVIEW (Protected) ---
 @router.put("/reviews/{review_id}", response_model=ReviewResponse)
 def update_review(
     review_id: int,
     req: ReviewCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(get_current_user),
+    db: Database = Depends(get_db),
 ):
-    """Update your own review — returns 403 if not the author"""
-    review = db.query(Review).filter(Review.id == review_id).first()
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can edit reviews")
+    review = db.reviews.find_one({"id": review_id})
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
-    if review.user_id != current_user.id:
+    if review["user_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="You can only edit your own reviews")
+    return publish_event(
+        db,
+        "review.updated",
+        {
+            "review_id": review_id,
+            "rating": req.rating,
+            "comment": req.comment,
+        },
+    )
 
-    review.rating = req.rating
-    review.comment = req.comment
-    _recalculate_rating(db, review.restaurant_id)
 
-    db.commit()
-    db.refresh(review)
-    return review
-
-
-# --- DELETE OWN REVIEW (Protected) ---
 @router.delete("/reviews/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_review(
-    review_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Delete your own review — returns 403 if not the author"""
-    review = db.query(Review).filter(Review.id == review_id).first()
+def delete_review(review_id: int, current_user: dict = Depends(get_current_user), db: Database = Depends(get_db)):
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can delete reviews")
+    review = db.reviews.find_one({"id": review_id})
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
-    if review.user_id != current_user.id:
+    if review["user_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="You can only delete your own reviews")
-
-    restaurant_id = review.restaurant_id
-    db.delete(review)
-    _recalculate_rating(db, restaurant_id)
-
-    db.commit()
+    publish_event(db, "review.deleted", {"review_id": review_id})
     return None
+
+
+@router.post("/reviews/{review_id}/photos", response_model=ReviewResponse)
+def upload_review_photo(
+    review_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: Database = Depends(get_db),
+):
+    if current_user.get("role") != "user":
+        raise HTTPException(status_code=403, detail="Only customers can upload review photos")
+    review = db.reviews.find_one({"id": review_id})
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    if review["user_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You can only upload photos to your own review")
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    upload_dir = os.path.join("uploads", "reviews")
+    os.makedirs(upload_dir, exist_ok=True)
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"review_{review_id}_{uuid.uuid4().hex}.{ext}"
+    file_path = os.path.join(upload_dir, filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    url = f"/uploads/reviews/{filename}"
+    db.reviews.update_one(
+        {"id": review_id},
+        {"$push": {"photo_urls": url}, "$set": {"updated_at": utcnow()}},
+    )
+    updated_review = db.reviews.find_one({"id": review_id})
+    return {
+        **serialize_review(updated_review),
+        "user_name": current_user.get("name", "Anonymous"),
+        "created_at": str(updated_review.get("created_at")) if updated_review.get("created_at") else None,
+    }

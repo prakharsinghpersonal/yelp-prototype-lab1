@@ -1,0 +1,147 @@
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    ports:
+      - "29092:29092"
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: deploy/docker/user-service.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INLINE_CONSUMER: "false"
+      SECRET_KEY: lab2-secret
+    restart: unless-stopped
+
+  owner-service:
+    build:
+      context: .
+      dockerfile: deploy/docker/owner-service.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INLINE_CONSUMER: "false"
+      SECRET_KEY: lab2-secret
+    restart: unless-stopped
+
+  restaurant-service:
+    build:
+      context: .
+      dockerfile: deploy/docker/restaurant-service.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INLINE_CONSUMER: "false"
+      SECRET_KEY: lab2-secret
+    restart: unless-stopped
+
+  review-service:
+    build:
+      context: .
+      dockerfile: deploy/docker/review-service.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INLINE_CONSUMER: "false"
+      SECRET_KEY: lab2-secret
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: deploy/docker/api-gateway.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INLINE_CONSUMER: "false"
+      SECRET_KEY: lab2-secret
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  review-worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/kafka-worker.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPICS: review.created,review.updated,review.deleted
+      KAFKA_GROUP_ID: review-workers
+    restart: unless-stopped
+
+  restaurant-worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/kafka-worker.Dockerfile
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: yelp_lab2
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPICS: restaurant.created,restaurant.updated,restaurant.claimed,restaurant.deleted
+      KAFKA_GROUP_ID: restaurant-workers
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/docker/frontend.Dockerfile
+    depends_on:
+      - api-gateway
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

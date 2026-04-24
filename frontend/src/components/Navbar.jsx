@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, isOwner, isCustomer, user } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -23,15 +23,24 @@ export default function Navbar() {
         {/* Center - Navigation Links */}
         {isLoggedIn && (
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <Link to="/" className="text-gray-700 hover:text-[#e1515f] transition-colors">
-              Explore
+            <Link to={isOwner ? '/owner/dashboard' : '/'} className="text-gray-700 hover:text-[#e1515f] transition-colors">
+              {isOwner ? 'Dashboard' : 'Explore'}
             </Link>
-            <Link to="/favorites" className="text-gray-700 hover:text-[#e1515f] transition-colors">
-              Favorites
-            </Link>
-            <Link to="/chat" className="text-gray-700 hover:text-[#e1515f] transition-colors">
-              Ask AI
-            </Link>
+            {isCustomer && (
+              <>
+                <Link to="/favorites" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+                  Favorites
+                </Link>
+                <Link to="/chat" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+                  Ask AI
+                </Link>
+              </>
+            )}
+            {isOwner && (
+              <Link to="/owner/reviews" className="text-gray-700 hover:text-[#e1515f] transition-colors">
+                Reviews
+              </Link>
+            )}
           </div>
         )}
 
@@ -39,17 +48,19 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <>
+              {isOwner && (
+                <Link 
+                  to="/owner/restaurants/new" 
+                  className="hidden sm:inline-block btn-secondary text-sm py-2"
+                >
+                  Add Restaurant
+                </Link>
+              )}
               <Link 
-                to="/add-restaurant" 
-                className="hidden sm:inline-block btn-secondary text-sm py-2"
-              >
-                Add Restaurant
-              </Link>
-              <Link 
-                to="/profile" 
+                to={isOwner ? '/owner/profile' : '/profile'} 
                 className="text-gray-700 hover:text-[#e1515f] transition-colors font-medium"
               >
-                Profile
+                {user?.name ? `${user.name.split(' ')[0]}'s Profile` : 'Profile'}
               </Link>
               <button
                 onClick={handleLogout}

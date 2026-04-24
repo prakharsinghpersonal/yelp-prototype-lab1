@@ -31,3 +31,15 @@ export const STATES_BY_COUNTRY = {
 };
 
 export const COUNTRIES = Object.keys(COUNTRY_CODES);
+
+const COUNTRY_ALIASES = {
+  USA: 'United States',
+  US: 'United States',
+  'U.S.A.': 'United States',
+  UK: 'United Kingdom',
+};
+
+export function normalizeCountry(country) {
+  if (!country) return country;
+  return COUNTRY_ALIASES[country] || country;
+}
