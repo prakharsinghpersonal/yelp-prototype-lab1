@@ -41,6 +41,10 @@ def serialize_review(doc: dict[str, Any] | None) -> dict[str, Any] | None:
     cleaned.setdefault("comment", None)
     cleaned.setdefault("status", "processed")
     cleaned.setdefault("photo_urls", [])
+    if cleaned.get("created_at") is not None:
+        cleaned["created_at"] = str(cleaned["created_at"])
+    if cleaned.get("updated_at") is not None:
+        cleaned["updated_at"] = str(cleaned["updated_at"])
     return cleaned
 
 

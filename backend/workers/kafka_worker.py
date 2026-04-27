@@ -14,6 +14,7 @@ def main() -> None:
     group_id = os.getenv("KAFKA_GROUP_ID", "yelp-lab2-workers")
     db = get_database()
     ensure_indexes(db)
+    print(f"kafka worker starting: group_id={group_id} bootstrap={bootstrap} topics={topics}", flush=True)
 
     while True:
         try:
@@ -25,11 +26,13 @@ def main() -> None:
                 auto_offset_reset="earliest",
                 enable_auto_commit=True,
             )
+            print("kafka worker connected and waiting for events", flush=True)
             for message in consumer:
                 payload = message.value
                 event_id = payload.get("event_id")
                 existing = db.events.find_one({"event_id": event_id, "status": "processed"})
                 if existing:
+                    print(f"skipping already processed event: topic={message.topic} event_id={event_id}", flush=True)
                     continue
                 result = process_event(db, message.topic, payload)
                 db.events.update_one(
@@ -46,8 +49,9 @@ def main() -> None:
                     },
                     upsert=True,
                 )
+                print(f"processed event: topic={message.topic} event_id={event_id} result={result}", flush=True)
         except Exception as exc:
-            print(f"kafka worker error: {exc}")
+            print(f"kafka worker error: {exc}", flush=True)
             time.sleep(5)
 
 

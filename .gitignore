@@ -11,6 +11,7 @@ build/
 # Node / React
 node_modules/
 build/
+frontend/.vite/
 .env.local
 .env.development.local
 .env.test.local
@@ -22,9 +23,13 @@ yarn-error.log*
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store
+
+# Local environment
+venv_py312/
 
 # Uploads
 uploads/
