@@ -4,7 +4,7 @@ metadata:
   name: user-service
   namespace: yelp-lab2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: user-service
@@ -48,7 +48,7 @@ metadata:
   name: owner-service
   namespace: yelp-lab2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: owner-service
@@ -92,7 +92,7 @@ metadata:
   name: restaurant-service
   namespace: yelp-lab2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: restaurant-service
@@ -136,7 +136,7 @@ metadata:
   name: review-service
   namespace: yelp-lab2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: review-service

@@ -22,7 +22,7 @@
           </elementProp>
           <elementProp name="restaurantPort" elementType="Argument">
             <stringProp name="Argument.name">restaurantPort</stringProp>
-            <stringProp name="Argument.value">8003</stringProp>
+            <stringProp name="Argument.value">8001</stringProp>
           </elementProp>
           <elementProp name="reviewHost" elementType="Argument">
             <stringProp name="Argument.name">reviewHost</stringProp>
@@ -30,7 +30,7 @@
           </elementProp>
           <elementProp name="reviewPort" elementType="Argument">
             <stringProp name="Argument.name">reviewPort</stringProp>
-            <stringProp name="Argument.value">8004</stringProp>
+            <stringProp name="Argument.value">8001</stringProp>
           </elementProp>
         </collectionProp>
       </elementProp>
@@ -107,7 +107,7 @@
           <stringProp name="HTTPSampler.domain">${reviewHost}</stringProp>
           <stringProp name="HTTPSampler.port">${reviewPort}</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
-          <stringProp name="HTTPSampler.path">/restaurants/2/reviews</stringProp>
+          <stringProp name="HTTPSampler.path">/restaurants/1/reviews</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
